@@ -1,0 +1,8 @@
+# The domain name the service is hosted on.
+domain = "tmpweb.net"
+
+# How long sites are retained if unspecified.
+default_retention = 7
+
+# The maximum time site may be retained. Larger values are rounded down to this.
+max_retention = 10
