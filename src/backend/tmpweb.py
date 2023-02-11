@@ -1,10 +1,11 @@
+import logging
 from pathlib import Path
 import secrets
 import shutil
 import sqlite3
 import time
 import tomllib
-
+import tempfile
 
 db = sqlite3.connect("tmpweb.db")
 
@@ -23,26 +24,37 @@ def create_site(
         retention_length = config.max_retention
     expiry_time = creation_date + retention_length * 24 * 3600
     try:
-        # Unzip/untar file
+        # https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
+        with tempfile.TemporaryDirectory as tmpdir:
+            # Unzip/untar file. Needs some more thinking around security issues
+            # of absolute paths and ../ paths in archives.
+            # https://docs.python.org/3/library/shutil.html#shutil.unpack_archive
+            shutil.unpack_archive(site_archive_path, tmpdir)
 
-        # Test recursively until we find a subdir with more than a single directory.
+            # Test recursively until we find a subdir with more than a single
+            # directory.
+            # https://docs.python.org/3/library/os.html#os.scandir
+            # https://docs.python.org/3/library/os.html#os.DirEntry.is_dir
 
-        # Record site in database
-        db.execute("INSERT")
+            # Record site in database
+            # https://docs.python.org/3/library/sqlite3.html
+            db.execute("INSERT")
 
-        # Delete any symlinks in the archive for security.
+            # Delete any symlinks in the archive for security.
+            # https://docs.python.org/3/library/os.html#os.walk
+            # https://docs.python.org/3/library/os.html#os.DirEntry
+            # https://docs.python.org/3/library/os.html#os.DirEntry.is_symlink
+            # https://docs.python.org/3/library/os.html#os.remove
+            # https://docs.python.org/3/library/os.html#os.DirEntry.path
 
-        # Copy that (possible) subdir to serving location
-        shutil.copytree("")
-
-        # Cleanup site archive and extraction files.
-        shutil.rmtree
-
+            # Copy that (possible) subdir to serving location
+            # https://docs.python.org/3/library/shutil.html#shutil.copytree
         # Return URL of site
         return f"https://{config.domain}/{site_id}/"
 
         # Return empty string if any prior step failed.
-    except Exception:
+    except Exception as err:
+        logging.error(err)
         return ""
 
 
