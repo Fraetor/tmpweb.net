@@ -76,10 +76,14 @@ def create_site(archive_path: Path, retention_length: int = config.default_reten
             cur.execute(query, site_id, creation_date, expiry_date)
             db.commit()
             shutil.copytree(web_root, config.web_root, dirs_exist_ok=True)
-        return {"status": 200, "content": f"https://{config.domain}/{site_id}/"}
+        return {
+            "status": "200 OK",
+            "headers": [("Content-type", "text/plain")],
+            "data": f"https://{config.domain}/{site_id}/",
+        }
     except Exception as err:
         logging.error(err)
-        return {"status": 500, "content": f"{err}"}
+        return {"status": "500 Internal Server Error", "headers": [], "data": f"{err}"}
 
 
 def delete_old_sites():
@@ -91,5 +95,27 @@ def delete_old_sites():
         db.commit()
 
 
-def handle_request():
-    pass
+def index_page(environ):
+    with open("index.html", "rb") as f:
+        if "wsgi.file_wrapper" in environ:
+            html = environ["wsgi.file_wrapper"](f)
+        else:
+            html = iter(lambda: f.read(), "")
+        return {
+            "status": "200 OK",
+            "headers": [
+                ("Content-type", "text/plain"),
+                ("Content-length", f"{len(html)}"),
+            ],
+            "data": html,
+        }
+
+
+def handle_request(environ, start_response):
+    match environ["REQUEST_METHOD"]:
+        case "GET":
+            response = index_page()
+        case "POST":
+            pass
+    start_response(response["status"], response["headers"])
+    return response["data"]
