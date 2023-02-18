@@ -11,7 +11,7 @@ max_retention = 10
 max_site_size = 52428800  # 50 MiB
 
 # The root where files are served from.
-web_root = "/srv/tmpweb/www/"
+web_root = "/tmp/srv/tmpweb/www/"
 
 # The location of the service's database.
-database_location = "/srv/tmpweb/tmpweb.db"
+database_location = "/tmp/srv/tmpweb/tmpweb.db"
