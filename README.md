@@ -9,6 +9,7 @@ TODO: Write this.
 ### Requirements
 
 - Recent [Python 3](https://www.python.org/) (developed with 3.11, but may work with some older versions)
+- gunicorn
 - NGINX web server
 
 ### Development Requirements
