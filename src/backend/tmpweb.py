@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import mimetypes
 import secrets
 import shutil
 import sqlite3
@@ -107,7 +108,7 @@ def create_site(environ):
             ("Content-Type", "text/plain"),
             ("Content-Length", f"{len(url)}"),
         ],
-        "data": url,
+        "data": [url],
     }
     return response
 
@@ -135,6 +136,60 @@ def delete_old_sites():
     return http_response(200)
 
 
+def redirect(target_path, temporary: bool = False):
+    if temporary:
+        response = {
+            "status": "302 Found",
+            "headers": [("Location", f"{target_path}")],
+            "data": [],
+        }
+    else:
+        response = {
+            "status": "301 Moved Permanently",
+            "headers": [("Location", f"{target_path}")],
+            "data": [],
+        }
+    return response
+
+
+def get_page(environ):
+    # Sanitise paths.
+    path = Path(config["web_root"], environ["PATH_INFO"]).resolve()
+    if not path.is_relative_to(config["web_root"]):
+        with open(Path(config["web_root"], "404.html"), "rb") as file:
+            if "wsgi.file_wrapper" in environ:
+                data = environ["wsgi.file_wrapper"](file)
+            else:
+                data = iter(lambda: file.read(), "")
+        return {
+            "status": "404 Not Found",
+            "headers": [("Content-Type", "text/html")],
+            "data": data,
+        }
+    html_suffixes = (".html", ".htm")
+    if path.suffix in html_suffixes:
+        return {
+            "status": "301 Moved Permanently",
+            "headers": [("Location", f"/{path.relative_to(config['web_root']).stem}")],
+            "data": [],
+        }
+    if path.suffix == "":
+        for suffix in [".html", ".htm", ".txt"]:
+            if path.with_suffix(suffix).is_file():
+                path = path.with_suffix(suffix)
+                break
+    response = {
+        "status": "200 OK",
+        "headers": [("Content-Type", mimetypes.guess_type(path))],
+    }
+    with open(path, "rb") as file:
+        if "wsgi.file_wrapper" in environ:
+            response["data"] = environ["wsgi.file_wrapper"](file)
+        else:
+            response["data"] = iter(lambda: file.read(), "")
+    return response
+
+
 def http_response(status_code):
     """Returns a HTTP response with an empty body."""
     status = {
@@ -150,12 +205,14 @@ def http_response(status_code):
     return {
         "status": status[status_code],
         "headers": [("Content-Length", "0")],
-        "data": b"",
+        "data": [],
     }
 
 
 def app(environ, start_response):
     match environ["REQUEST_METHOD"]:
+        case "GET":
+            response = get_page(environ)
         case "POST":
             response = create_site(environ)
         case "DELETE":
@@ -166,4 +223,4 @@ def app(environ, start_response):
         case _:
             response = http_response(405)
     start_response(response["status"], response["headers"])
-    return [response["data"]]
+    return response["data"]
