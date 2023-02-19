@@ -161,11 +161,11 @@ def get_page(environ):
                 data = environ["wsgi.file_wrapper"](file)
             else:
                 data = iter(lambda: file.read(), "")
-        return {
-            "status": "404 Not Found",
-            "headers": [("Content-Type", "text/html")],
-            "data": data,
-        }
+            return {
+                "status": "404 Not Found",
+                "headers": [("Content-Type", "text/html")],
+                "data": data,
+            }
     html_suffixes = (".html", ".htm")
     if path.suffix in html_suffixes:
         return {
@@ -187,7 +187,7 @@ def get_page(environ):
             response["data"] = environ["wsgi.file_wrapper"](file)
         else:
             response["data"] = iter(lambda: file.read(), "")
-    return response
+        return response
 
 
 def http_response(status_code):
