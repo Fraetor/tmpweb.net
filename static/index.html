@@ -14,19 +14,30 @@
         <center>
             <img src="logo.svg" alt="/tmp/web.net">
         </center>
-        <p>Temporary hosting for static websites.</p>
+        <p>Temporary hosting for static websites, usable programmatically.</p>
         <p>
-            You can create a hosted website simply by uploading a zip or tar file
-            containing your site via a HTTP POST. The below curl command will do
-            just that:
+            With this service you can create a hosted website simply by
+            uploading a zip or tar file containing your site (up to 50 MiB) via
+            a HTTP POST. The below curl command will do just that:
         </p>
         <center>
             <code>
             curl --data-binary @website.zip https://tmpweb.net
         </code>
         </center>
-        <p>The response will be the URL at which your website will be hosted for
-            the next seven days.</p>
+        <p>The server will respond with the URL at which your website will be
+            hosted for the next seven days.</p>
+        <p>/tmp/web.net is intended to aid in sharing generated HTML reports and
+            design prototypes.</p>
+
+        <h2 id="web-uploader">Web Uploader</h2>
+        <label for="website">Upload a website archive:</label>
+        <form method="post" , enctype="multipart/form-data" action="https://tmpweb.net/">
+            <input type="file" id="website" name="website" accept="application/zip, application/x-tar, application/x-gzip,
+        application/gzip, application/tar+gzip">
+            <button>Upload</button>
+        </form>
+
         <p>The source code can be found on <a href="https://github.com/Fraetor/tmpweb.net">GitHub</a>.</p>
     </main>
 </body>
