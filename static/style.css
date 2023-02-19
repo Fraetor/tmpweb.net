@@ -1,6 +1,6 @@
 body {
     background-color: #f0f0f2;
-    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: sans-serif;
 }
 
 main {
@@ -41,4 +41,14 @@ div>a:active {
     left: 1px;
 
     box-shadow: 1px 2px 3px darkgrey;
+}
+
+main>img {
+    margin: 2em auto;
+}
+
+code {
+    background-color: #bac8ff;
+    padding: 0.5em 1em;
+    border-radius: 0.3em;
 }
