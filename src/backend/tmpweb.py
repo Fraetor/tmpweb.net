@@ -12,20 +12,25 @@ try:
 except ModuleNotFoundError:
     import tomli as tomllib
 
-from . import safe_extractor
+from safe_extractor import safe_extract
 
-db = sqlite3.connect("tmpweb.db")
-cur = db.cursor()
+
+logging.basicConfig(level=logging.DEBUG)
+
+# Read config file.
+with open("tmpweb_config.toml", "rb") as fp:
+    config = tomllib.load(fp)
+
+# Connect to database and setup table.
+db = sqlite3.connect(config["database_location"])
 query = """CREATE TABLE IF NOT EXISTS sites(
     site_id TEXT PRIMARY KEY,
     creation_date INT,
     expiry_date INT
 );
 """
-cur.execute(query)
+db.execute(query)
 db.commit()
-
-config = tomllib.load(Path("tmpweb_config.toml").read_bytes())
 
 
 def get_web_root(dir: Path) -> Path:
@@ -36,86 +41,129 @@ def get_web_root(dir: Path) -> Path:
     raise ValueError("No files in archive.")
 
 
-def create_site(archive_path: Path, retention_length: int = config.default_retention):
+def create_site(environ):
+    """Create a site from a POSTed archive."""
+    # Save archive
+    if int(environ["CONTENT_LENGTH"]) < config["max_site_size"]:
+        body = environ["wsgi.input"]
+        archive = body.read(config["max_site_size"])
+        if len(body.read(1)):
+            logging.error(
+                f"Archive is too big! Max size is {config['max_site_size']} bytes."
+            )
+            return http_response(413)
+        if archive[:4] == b"\x50\x4b\x03\x04" or archive[:4] == b"\x50\x4b\x01\x02":
+            suffix = ".zip"
+        else:
+            suffix = ".tar"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as file:
+            archive_path = Path(file.name)
+            file.write(archive)
+    else:
+        logging.error(
+            f"Archive is too big! Max size is {config['max_site_size']} bytes."
+        )
+        return http_response(413)
+    # Might make this configurable in future.
+    retention_length = config["default_retention"]
     # Generated URLs will have a 9 byte long base64 path. As base64 encodes 3 bytes
     # to 4 characters this gives us a nice length of URL whilst having sufficient
     # keyspace for randomly finding a site to take many millennia.
     site_id = secrets.token_urlsafe(9)
     creation_date = int(time.time())
-    if retention_length > config.max_retention:
-        retention_length = config.max_retention
+    if retention_length > config["max_retention"]:
+        retention_length = config["max_retention"]
     expiry_date = creation_date + retention_length * 24 * 3600
     try:
-        with tempfile.TemporaryDirectory as tmpdir:
-            # Unzip/untar in a vaguely safe way.
-            if archive_path.suffix.lower() == ".zip":
-                safe_extractor.unzip(archive_path, tmpdir)
-            elif ".tar" in archive_path.suffix.lower():
-                safe_extractor.untar(archive_path, tmpdir)
-            else:
-                raise ValueError(f"Unknown filetype for {archive_path}")
-            # Delete any symlinks in the archive for security.
-            total_size = 0
-            for _, dirs, files in os.walk(tmpdir, followlinks=False):
-                for dir in dirs:
-                    if dir.is_symlink():
-                        os.remove(dir.path)
-                for file in files:
-                    if file.is_symlink():
-                        os.remove(file.path)
-                    else:
-                        total_size += file.stat().st_size
-                # Check the extracted site is not too big.
-                if total_size > config.max_site_size:
-                    raise ValueError(
-                        f"Unpacked archive is too big! Max size is {config.max_site_size} bytes."
-                    )
-            web_root = get_web_root(tmpdir)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            try:
+                safe_extract(archive_path, tmpdir, config["max_site_size"])
+            except ValueError:
+                logging.error(f"Unknown filetype for {archive_path}")
+                return http_response(400)
+            finally:
+                # Remove original archive.
+                archive_path.unlink()
+            try:
+                web_root = get_web_root(tmpdir)
+            except ValueError:
+                logging.error("No servable files found in archive.")
+                return http_response(400)
             # Record site in database
             query = "INSERT INTO sites VALUES(?, ?, ?);"
-            cur.execute(query, site_id, creation_date, expiry_date)
+            db.execute(query, (site_id, creation_date, expiry_date))
             db.commit()
-            shutil.copytree(web_root, config.web_root, dirs_exist_ok=True)
-        return {
-            "status": "200 OK",
-            "headers": [("Content-type", "text/plain")],
-            "data": f"https://{config.domain}/{site_id}/",
-        }
+            shutil.copytree(
+                web_root, Path(config["web_root"], site_id), dirs_exist_ok=True
+            )
     except Exception as err:
         logging.error(err)
-        return {"status": "500 Internal Server Error", "headers": [], "data": f"{err}"}
+        return http_response(500)
+    url = f"https://{config['domain']}/{site_id}/\n".encode()
+    logging.info(f"Created site at {url.decode()}")
+    response = {
+        "status": "200 OK",
+        "headers": [
+            ("Content-Type", "text/plain"),
+            ("Content-Length", f"{len(url)}"),
+        ],
+        "data": url,
+    }
+    return response
+
+
+def get_client_address(environ):
+    """Gets the address of the client"""
+    try:
+        return environ["HTTP_FORWARDED"].split(",")[-1].strip()
+    except KeyError:
+        try:
+            return environ["HTTP_X_FORWARDED_FOR"].split(",")[-1].strip()
+        except KeyError:
+            return environ["REMOTE_ADDR"]
 
 
 def delete_old_sites():
-    query = "SELECT * FROM sites WHERE expiry_date < ?;"
-    for row in cur.execute(query, int(time.time)):
+    """Deletes expired sites."""
+    logging.info("Deleting expired sites.")
+    query = "SELECT site_id FROM sites WHERE expiry_date < ?;"
+    for row in db.execute(query, (int(time.time()),)):
         site_id = row[0]
-        shutil.rmtree(Path(config.web_root).joinpath(f"{site_id}/"))
-        cur.execute("DELETE FROM sites WHERE site_id IS ?", site_id)
+        shutil.rmtree(Path(config["web_root"]).joinpath(f"{site_id}/"))
+        db.execute("DELETE FROM sites WHERE site_id = ?;", (site_id,))
         db.commit()
+    return http_response(200)
 
 
-def index_page(environ):
-    with open("index.html", "rb") as f:
-        if "wsgi.file_wrapper" in environ:
-            html = environ["wsgi.file_wrapper"](f)
-        else:
-            html = iter(lambda: f.read(), "")
-        return {
-            "status": "200 OK",
-            "headers": [
-                ("Content-type", "text/plain"),
-                ("Content-length", f"{len(html)}"),
-            ],
-            "data": html,
-        }
+def http_response(status_code):
+    """Returns a HTTP response with an empty body."""
+    status = {
+        200: "200 OK",
+        400: "400 Bad Request",
+        403: "403 Forbidden",
+        404: "404 Not Found",
+        405: "405 Method Not Allowed",
+        413: "413 Content Too Large",
+        500: "500 Internal Server Error",
+        507: "507 Insufficient Storage",
+    }
+    return {
+        "status": status[status_code],
+        "headers": [("Content-Length", "0")],
+        "data": b"",
+    }
 
 
-def handle_request(environ, start_response):
+def app(environ, start_response):
     match environ["REQUEST_METHOD"]:
-        case "GET":
-            response = index_page()
         case "POST":
-            pass
+            response = create_site(environ)
+        case "DELETE":
+            if get_client_address(environ) == "127.0.0.1":
+                response = delete_old_sites()
+            else:
+                response = http_response(403)
+        case _:
+            response = http_response(405)
     start_response(response["status"], response["headers"])
-    return response["data"]
+    return [response["data"]]

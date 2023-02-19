@@ -26,7 +26,6 @@
 ################################################################################
 
 import os
-import sys
 from pathlib import Path
 import tarfile
 import zipfile
@@ -44,14 +43,14 @@ def _safe_tar_members(members: tarfile.TarInfo, extract_path: Path):
     valid_members = []
     for member in members:
         if member.isdev():
-            print(f"{member.name} is blocked (device file)", file=sys.stderr)
+            print(f"{member.name} is blocked (device file)")
         elif member.issym() or member.islnk():
-            print(f"{member.name} is blocked (symlink or hard link)", file=sys.stderr)
+            print(f"{member.name} is blocked (symlink or hard link)")
         elif not _contains_path(member.name, extract_path):
-            print(f"{member.name} is blocked (illegal path)", file=sys.stderr)
+            print(f"{member.name} is blocked (illegal path)")
         else:
             valid_members.append(member)
-        return valid_members
+    return valid_members
 
 
 def _safe_zip_members(members: zipfile.ZipInfo, extract_path: Path):
@@ -59,31 +58,54 @@ def _safe_zip_members(members: zipfile.ZipInfo, extract_path: Path):
     for member in members:
         # ZIP can't contain device files/symlinks... Probably...
         if not _contains_path(member.filename, extract_path):
-            print(f"{member.filename} is blocked (illegal path)", file=sys.stderr)
+            print(f"{member.filename} is blocked (illegal path)")
         else:
             valid_members.append(member)
-        return valid_members
+    return valid_members
 
 
-def untar(tar_file: Path, extract_path: Path = Path(".")):
+def _delete_remaining_symlinks(extract_path: Path, max_size: int):
+    # Delete any symlinks in the archive for security.
+    total_size = 0
+    for root, dirs, files in os.walk(extract_path, followlinks=False):
+        for directory in dirs:
+            directory = Path(root, directory)
+            if directory.is_symlink():
+                directory.unlink()
+        for file in files:
+            file = Path(root, file)
+            if file.is_symlink():
+                file.unlink()
+            else:
+                total_size += file.stat().st_size
+        # Check the extracted site is not too big.
+        if total_size > max_size:
+            raise ValueError(
+                f"Unpacked archive is too big! Max size is {max_size} bytes."
+            )
+
+
+def safe_extract(
+    file_path: Path, extract_path: Path = Path("."), max_size: int = 2**32 - 1
+):
+    """Unzip/untar in a vaguely safe way."""
     extract_path = Path(extract_path)
     old_cwd = Path.cwd()
     os.chdir(extract_path)
     try:
-        with tarfile.open(tar_file) as archive:
-            permitted_members = _safe_tar_members(archive.getmembers(), extract_path)
-            archive.extractall(path=extract_path, members=permitted_members)
-    finally:
-        os.chdir(old_cwd)
-
-
-def unzip(zip_file: Path, extract_path: Path = Path(".")):
-    extract_path = Path(extract_path)
-    old_cwd = Path.cwd()
-    os.chdir(extract_path)
-    try:
-        with zipfile.ZipFile(zip_file) as archive:
-            permitted_members = _safe_zip_members(archive.infolist(), extract_path)
-            archive.extractall(path=extract_path, members=permitted_members)
+        if file_path.suffix.lower() == ".zip":
+            with zipfile.ZipFile(file_path) as archive:
+                permitted_members = _safe_zip_members(archive.infolist(), extract_path)
+                archive.extractall(path=extract_path, members=permitted_members)
+            _delete_remaining_symlinks(extract_path, max_size)
+        elif file_path.suffix.lower() == ".tar":
+            with tarfile.open(file_path) as archive:
+                permitted_members = _safe_tar_members(
+                    archive.getmembers(), extract_path
+                )
+                archive.extractall(path=extract_path, members=permitted_members)
+            _delete_remaining_symlinks(extract_path, max_size)
+        else:
+            raise ValueError(f"Unknown file extension: {file_path.suffix}")
     finally:
         os.chdir(old_cwd)
