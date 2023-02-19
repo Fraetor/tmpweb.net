@@ -4,7 +4,69 @@ A temporary website hosting service, usable programmatically.
 
 ## Installation
 
-TODO: Write this.
+- Clone this git repository.
+
+```bash
+git clone https://github.com/Fraetor/tmpweb.net.git
+```
+
+- Create a venv (optional, but highly recommended)
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+- Install the dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+- Configure NGINX to act as a proxy to the gunicorn server.
+
+```nginx
+server {
+    listen [::]:443 ssl ipv6only=on;
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/tmpweb.net/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/tmpweb.net/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+    server_name tmpweb.net;
+    root /src/tmpweb/www;
+    index index.html index.htm index;
+    location / {
+        # Send requests to gunicorn server.
+        proxy_pass http://localhost:8000;
+    }
+}
+server {
+    listen [::]:80 ;
+    listen 80 ;
+    server_name tmpweb.net;
+
+    if ($host = tmpweb.net) {
+        return 301 https://$host$request_uri;
+    }
+    return 404;
+}
+```
+
+- Configure `tmpweb_config.toml`.
+
+- Copy static files into hosting directory.
+
+```bash
+mkdir -p /srv/tmpweb/www
+cp -r static/* /srv/tmpweb/www/
+```
+
+- Reload NGINX
+
+```bash
+nginx -s reload
+```
 
 ### Requirements
 
@@ -18,11 +80,18 @@ TODO: Write this.
 
 ## Usage
 
-TODO: Write this.
+- Run with gunicorn.
+
+```bash
+cd src
+gunicorn tmpweb:app 8000
+```
 
 ## Roadmap/To Do
 
-- [ ] Add tests
+- [ ] Add tests.
+- [ ] Get NGINX to handle all GET requests.
+- [ ] Improve front page, including adding a web uploader.
 
 <!-- ## Contributing
 

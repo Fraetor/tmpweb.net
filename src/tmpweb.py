@@ -152,20 +152,26 @@ def redirect(target_path, temporary: bool = False):
     return response
 
 
+def file_not_found(environ):
+    file = open(Path(config["web_root"], "404.html"), "rb")
+    if "wsgi.file_wrapper" in environ:
+        data = environ["wsgi.file_wrapper"](file)
+    else:
+        data = iter(lambda: file.read(), "")
+    return {
+        "status": "404 Not Found",
+        "headers": [("Content-Type", "text/html")],
+        "data": data,
+    }
+
+
 def get_page(environ):
     # Sanitise paths.
-    path = Path(config["web_root"], environ["PATH_INFO"]).resolve()
+    path = Path(config["web_root"] + environ["PATH_INFO"]).resolve()
     if not path.is_relative_to(config["web_root"]):
-        file = open(Path(config["web_root"], "404.html"), "rb")
-        if "wsgi.file_wrapper" in environ:
-            data = environ["wsgi.file_wrapper"](file)
-        else:
-            data = iter(lambda: file.read(), "")
-        return {
-            "status": "404 Not Found",
-            "headers": [("Content-Type", "text/html")],
-            "data": data,
-        }
+        return file_not_found(environ)
+    if path.is_dir():
+        path = path.joinpath("index")
     html_suffixes = (".html", ".htm")
     if path.suffix in html_suffixes:
         return {
@@ -178,11 +184,18 @@ def get_page(environ):
             if path.with_suffix(suffix).is_file():
                 path = path.with_suffix(suffix)
                 break
+    type = mimetypes.guess_type(path)[0]
+    if not type:
+        type = "application/octet-stream"
+
     response = {
         "status": "200 OK",
-        "headers": [("Content-Type", mimetypes.guess_type(path))],
+        "headers": [("Content-Type", type)],
     }
-    file = open(path, "rb")
+    try:
+        file = open(path, "rb")
+    except FileNotFoundError:
+        return file_not_found(environ)
     if "wsgi.file_wrapper" in environ:
         response["data"] = environ["wsgi.file_wrapper"](file)
     else:
