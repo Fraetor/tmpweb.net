@@ -1,6 +1,4 @@
-# [tmpweb.net](https://tmpweb.net)
-
-![/tmp/web.net logo](src/frontend/logo.svg)
+[![tmpweb.net](src/frontend/logo.svg)](https://tmpweb.net)
 
 A temporary website hosting service, usable programmatically.
 
