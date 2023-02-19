@@ -156,16 +156,16 @@ def get_page(environ):
     # Sanitise paths.
     path = Path(config["web_root"], environ["PATH_INFO"]).resolve()
     if not path.is_relative_to(config["web_root"]):
-        with open(Path(config["web_root"], "404.html"), "rb") as file:
-            if "wsgi.file_wrapper" in environ:
-                data = environ["wsgi.file_wrapper"](file)
-            else:
-                data = iter(lambda: file.read(), "")
-            return {
-                "status": "404 Not Found",
-                "headers": [("Content-Type", "text/html")],
-                "data": data,
-            }
+        file = open(Path(config["web_root"], "404.html"), "rb")
+        if "wsgi.file_wrapper" in environ:
+            data = environ["wsgi.file_wrapper"](file)
+        else:
+            data = iter(lambda: file.read(), "")
+        return {
+            "status": "404 Not Found",
+            "headers": [("Content-Type", "text/html")],
+            "data": data,
+        }
     html_suffixes = (".html", ".htm")
     if path.suffix in html_suffixes:
         return {
@@ -182,12 +182,12 @@ def get_page(environ):
         "status": "200 OK",
         "headers": [("Content-Type", mimetypes.guess_type(path))],
     }
-    with open(path, "rb") as file:
-        if "wsgi.file_wrapper" in environ:
-            response["data"] = environ["wsgi.file_wrapper"](file)
-        else:
-            response["data"] = iter(lambda: file.read(), "")
-        return response
+    file = open(path, "rb")
+    if "wsgi.file_wrapper" in environ:
+        response["data"] = environ["wsgi.file_wrapper"](file)
+    else:
+        response["data"] = iter(lambda: file.read(), "")
+    return response
 
 
 def http_response(status_code):
