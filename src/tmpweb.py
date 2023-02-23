@@ -72,8 +72,6 @@ def create_site(environ):
     # keyspace for randomly finding a site to take many millennia.
     site_id = secrets.token_urlsafe(9)
     creation_date = int(time.time())
-    if retention_length > config["max_retention"]:
-        retention_length = config["max_retention"]
     expiry_date = creation_date + retention_length * 24 * 3600
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -100,7 +98,7 @@ def create_site(environ):
     except Exception as err:
         logging.error(err)
         return http_response(500)
-    url = f"https://{config['domain']}/{site_id}/\n".encode()
+    url = f"{config['domain']}/{site_id}/\n".encode()
     logging.info(f"Created site at {url.decode()}")
     response = {
         "status": "200 OK",

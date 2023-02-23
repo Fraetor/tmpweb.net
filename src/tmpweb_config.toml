@@ -1,11 +1,8 @@
-# The domain name the service is hosted on.
-domain = "tmpweb.net"
+# The location of the service's public webserver.'
+domain = "http://localhost:8000"
 
-# How many days sites are retained if unspecified.
+# How many days sites are retained.
 default_retention = 7
-
-# The maximum time site may be retained. Larger values are rounded down to this.
-max_retention = 10
 
 # The maximum size for the unpacked site in bytes.
 max_site_size = 52428800  # 50 MiB
