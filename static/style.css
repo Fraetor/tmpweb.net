@@ -17,8 +17,13 @@ h1 {
     text-align: center;
 }
 
+code {
+    background-color: #bac8ff;
+    padding: 0.5em 1em;
+    border-radius: 0.3em;
+}
 
-div>a {
+.link-button {
     display: block;
     text-decoration: none;
     color: black;
@@ -30,25 +35,25 @@ div>a {
     box-shadow: 2px 3px 4px 2px darkgrey;
 }
 
-div>a:hover {
+.link-button:hover {
     background-color: #748ffc;
     transition: background-color 0.2s;
 }
 
-div>a:active {
+.link-button:active {
     position: relative;
     top: 1px;
     left: 1px;
-
     box-shadow: 1px 2px 3px darkgrey;
 }
 
-main>img {
+.logo {
+    text-align: center;
     margin: 2em auto;
+    width: 100%;
+    max-width: 520px;
 }
 
-code {
-    background-color: #bac8ff;
-    padding: 0.5em 1em;
-    border-radius: 0.3em;
+.centred {
+    text-align: center;
 }
