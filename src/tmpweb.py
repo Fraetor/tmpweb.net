@@ -19,7 +19,7 @@ from safe_extractor import safe_extract
 logging.basicConfig(level=logging.DEBUG)
 
 # Read config file.
-with open("tmpweb_config.toml", "rb") as fp:
+with open("config.toml", "rb") as fp:
     config = tomllib.load(fp)
 
 # Connect to database and setup table.
