@@ -232,7 +232,7 @@ def app(environ, start_response):
             else:
                 response = http_response(403)
         case _:
-            print(environ)
+            logging.error(f'Request Method: {environ["REQUEST_METHOD"]}')
             response = http_response(405)
     start_response(response["status"], response["headers"])
     return response["data"]
