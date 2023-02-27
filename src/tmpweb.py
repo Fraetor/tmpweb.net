@@ -221,7 +221,7 @@ def http_response(status_code):
 
 
 def app(environ, start_response):
-    match environ["REQUEST_METHOD"]:
+    match environ["REQUEST_METHOD"].lower():
         case "GET":
             response = get_page(environ)
         case "POST":
