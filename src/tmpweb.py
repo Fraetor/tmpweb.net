@@ -210,6 +210,7 @@ def http_response(status_code):
         404: "404 Not Found",
         405: "405 Method Not Allowed",
         413: "413 Content Too Large",
+        418: "418 I'm a teapot",
         500: "500 Internal Server Error",
         507: "507 Insufficient Storage",
     }
