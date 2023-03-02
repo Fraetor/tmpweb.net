@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-import mimetypes
 import secrets
 import shutil
 import sqlite3
@@ -44,7 +43,7 @@ def get_web_root(dir: Path) -> Path:
 
 def create_site(environ):
     """Create a site from a POSTed archive."""
-    # Save archive
+    # Save archive to temporary location.
     if int(environ["CONTENT_LENGTH"]) < config["max_site_size"]:
         body = environ["wsgi.input"]
         archive = body.read(config["max_site_size"])
@@ -111,6 +110,19 @@ def create_site(environ):
     return response
 
 
+def delete_old_sites():
+    """Deletes expired sites."""
+    logging.info("Deleting expired sites.")
+    query = "SELECT site_id FROM sites WHERE expiry_date < ?;"
+    for row in db.execute(query, (int(time.time()),)):
+        site_id = row[0]
+        logging.debug(f"Deleting site: {site_id}")
+        shutil.rmtree(Path(config["web_root"]).joinpath(f"{site_id}/"))
+        db.execute("DELETE FROM sites WHERE site_id = ?;", (site_id,))
+        db.commit()
+    return http_response(200)
+
+
 def get_client_address(environ):
     """Gets the address of the client"""
     try:
@@ -120,85 +132,6 @@ def get_client_address(environ):
             return environ["HTTP_X_FORWARDED_FOR"].split(",")[-1].strip()
         except KeyError:
             return environ["REMOTE_ADDR"]
-
-
-def delete_old_sites():
-    """Deletes expired sites."""
-    logging.info("Deleting expired sites.")
-    query = "SELECT site_id FROM sites WHERE expiry_date < ?;"
-    for row in db.execute(query, (int(time.time()),)):
-        site_id = row[0]
-        shutil.rmtree(Path(config["web_root"]).joinpath(f"{site_id}/"))
-        db.execute("DELETE FROM sites WHERE site_id = ?;", (site_id,))
-        db.commit()
-    return http_response(200)
-
-
-def redirect(target_path, temporary: bool = False):
-    if temporary:
-        response = {
-            "status": "302 Found",
-            "headers": [("Location", f"{target_path}")],
-            "data": [],
-        }
-    else:
-        response = {
-            "status": "301 Moved Permanently",
-            "headers": [("Location", f"{target_path}")],
-            "data": [],
-        }
-    return response
-
-
-def file_not_found(environ):
-    file = open(Path(config["web_root"], "404.html"), "rb")
-    if "wsgi.file_wrapper" in environ:
-        data = environ["wsgi.file_wrapper"](file)
-    else:
-        data = iter(lambda: file.read(), "")
-    return {
-        "status": "404 Not Found",
-        "headers": [("Content-Type", "text/html")],
-        "data": data,
-    }
-
-
-def get_page(environ):
-    # Sanitise paths.
-    path = Path(config["web_root"] + environ["PATH_INFO"]).resolve()
-    if not path.is_relative_to(config["web_root"]):
-        return file_not_found(environ)
-    if path.is_dir():
-        path = path.joinpath("index")
-    html_suffixes = (".html", ".htm")
-    if path.suffix in html_suffixes:
-        return {
-            "status": "301 Moved Permanently",
-            "headers": [("Location", f"/{path.relative_to(config['web_root']).stem}")],
-            "data": [],
-        }
-    if path.suffix == "":
-        for suffix in [".html", ".htm", ".txt"]:
-            if path.with_suffix(suffix).is_file():
-                path = path.with_suffix(suffix)
-                break
-    type = mimetypes.guess_type(path)[0]
-    if not type:
-        type = "application/octet-stream"
-
-    response = {
-        "status": "200 OK",
-        "headers": [("Content-Type", type)],
-    }
-    try:
-        file = open(path, "rb")
-    except FileNotFoundError:
-        return file_not_found(environ)
-    if "wsgi.file_wrapper" in environ:
-        response["data"] = environ["wsgi.file_wrapper"](file)
-    else:
-        response["data"] = iter(lambda: file.read(), "")
-    return response
 
 
 def http_response(status_code):
@@ -222,18 +155,17 @@ def http_response(status_code):
 
 
 def app(environ, start_response):
-    match environ["REQUEST_METHOD"]:
-        case "GET":
-            response = get_page(environ)
-        case "POST":
-            response = create_site(environ)
-        case "DELETE":
-            if get_client_address(environ) == "127.0.0.1":
-                response = delete_old_sites()
-            else:
-                response = http_response(403)
-        case _:
-            logging.error(f'Request Method: {environ["REQUEST_METHOD"]}')
-            response = http_response(418)
+    if environ["REQUEST_METHOD"] == "POST":
+        logging.debug("Received POST request")
+        response = create_site(environ)
+    elif environ["REQUEST_METHOD"] == "DELETE":
+        logging.debug("Received DELETE request")
+        if get_client_address(environ) == "127.0.0.1":
+            response = delete_old_sites()
+        else:
+            response = http_response(403)
+    else:
+        logging.error(f'Unhandled request method: {environ["REQUEST_METHOD"]}')
+        response = http_response(405)
     start_response(response["status"], response["headers"])
     return response["data"]
