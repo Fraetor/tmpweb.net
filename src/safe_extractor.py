@@ -94,17 +94,25 @@ def safe_extract(
     os.chdir(extract_path)
     try:
         if file_path.suffix.lower() == ".zip":
-            with zipfile.ZipFile(file_path) as archive:
-                permitted_members = _safe_zip_members(archive.infolist(), extract_path)
-                archive.extractall(path=extract_path, members=permitted_members)
-            _delete_remaining_symlinks(extract_path, max_size)
+            try:
+                with zipfile.ZipFile(file_path) as archive:
+                    permitted_members = _safe_zip_members(
+                        archive.infolist(), extract_path
+                    )
+                    archive.extractall(path=extract_path, members=permitted_members)
+                _delete_remaining_symlinks(extract_path, max_size)
+            except zipfile.BadZipFile:
+                raise ValueError("Bad zip file")
         elif file_path.suffix.lower() == ".tar":
-            with tarfile.open(file_path) as archive:
-                permitted_members = _safe_tar_members(
-                    archive.getmembers(), extract_path
-                )
-                archive.extractall(path=extract_path, members=permitted_members)
-            _delete_remaining_symlinks(extract_path, max_size)
+            try:
+                with tarfile.open(file_path) as archive:
+                    permitted_members = _safe_tar_members(
+                        archive.getmembers(), extract_path
+                    )
+                    archive.extractall(path=extract_path, members=permitted_members)
+                _delete_remaining_symlinks(extract_path, max_size)
+            except tarfile.TarError:
+                raise ValueError("Bad tar file")
         else:
             raise ValueError(f"Unknown file extension: {file_path.suffix}")
     finally:
