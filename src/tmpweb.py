@@ -233,6 +233,6 @@ def app(environ, start_response):
                 response = http_response(403)
         case _:
             logging.error(f'Request Method: {environ["REQUEST_METHOD"]}')
-            response = http_response(405)
+            response = http_response(418)
     start_response(response["status"], response["headers"])
     return response["data"]
