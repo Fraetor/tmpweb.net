@@ -155,11 +155,10 @@ def http_response(status_code):
 
 
 def app(environ, start_response):
+    logging.debug(f"Received {environ['REQUEST_METHOD']} request")
     if environ["REQUEST_METHOD"] == "POST":
-        logging.debug("Received POST request")
         response = create_site(environ)
     elif environ["REQUEST_METHOD"] == "DELETE":
-        logging.debug("Received DELETE request")
         if get_client_address(environ) == "127.0.0.1":
             response = delete_old_sites()
         else:
