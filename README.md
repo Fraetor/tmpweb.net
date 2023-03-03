@@ -90,8 +90,9 @@ gunicorn tmpweb:app 8000
 ## Roadmap/To Do
 
 - [ ] Add tests.
-- [ ] Get NGINX to handle all GET requests.
-- [ ] Improve front page, including adding a web uploader.
+- [ ] Improve front page, including adding terms of use.
+- [ ] Migrate to shared infrastructure.
+- [ ] Add better installation instructions.
 
 <!-- ## Contributing
 
