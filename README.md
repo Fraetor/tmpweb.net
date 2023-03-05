@@ -17,50 +17,15 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-- Install the dependencies
+- Install the dependencies: `pip install -r requirements.txt`
 
-```bash
-pip install -r requirements.txt
-```
+- Configure NGINX to act as a proxy to the gunicorn server. See
+  [nginx.conf](nginx.conf) and [tmpweb.net.conf](tmpweb.net.conf) for example
+  configurations.
 
-- Configure NGINX to act as a proxy to the gunicorn server.
+- Configure `src/config.toml`.
 
-```nginx
-server {
-    listen [::]:443 ssl ipv6only=on;
-    listen 443 ssl;
-    ssl_certificate /etc/letsencrypt/live/tmpweb.net/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/tmpweb.net/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-    server_name tmpweb.net;
-    root /src/tmpweb/www;
-    index index.html index.htm index;
-    location / {
-        # Send requests to gunicorn server.
-        proxy_pass http://localhost:8000;
-    }
-}
-server {
-    listen [::]:80 ;
-    listen 80 ;
-    server_name tmpweb.net;
-
-    if ($host = tmpweb.net) {
-        return 301 https://$host$request_uri;
-    }
-    return 404;
-}
-```
-
-- Configure `tmpweb_config.toml`.
-
-- Copy static files into hosting directory.
-
-```bash
-mkdir -p /srv/tmpweb/www
-cp -r static/* /srv/tmpweb/www/
-```
+- Copy static files into hosting directory: `python3 install.py`
 
 - Reload NGINX
 
@@ -80,19 +45,26 @@ nginx -s reload
 
 ## Usage
 
-- Run with gunicorn.
+Once NGINX is configured correctly, simply run `./run-tmpweb.sh`.
+
+To delete expired sites pass a DELETE request from a loopback address.
+
+I'd recommend adding this to the crontab:
 
 ```bash
-cd src
-gunicorn tmpweb:app 8000
+# Run tmpweb.net application server on startup.
+@reboot cd /var/www/tmpweb/tmpweb.net ; ./run-tmpweb.sh
+
+# Delete expired websites for tmpweb.net.
+0 0 * * * perl -e 'sleep rand(18000)' ; curl -X DELETE http://127.0.0.1:8000
 ```
 
 ## Roadmap/To Do
 
 - [ ] Add tests.
 - [ ] Improve front page, including adding terms of use.
-- [ ] Migrate to shared infrastructure.
-- [ ] Add better installation instructions.
+- [x] Migrate to shared infrastructure.
+- [x] Add better installation instructions.
 
 <!-- ## Contributing
 
