@@ -28,6 +28,7 @@ code {
     text-decoration: none;
     color: black;
     background-color: #91a7ff;
+    transition: background-color 0.2s;
     width: fit-content;
     margin: 2em auto 0;
     padding: 1em;
