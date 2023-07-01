@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>/tmp/web.net</title>
+    <title>tmpweb.net</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="A programmatically usable temporary web host.">
     <link rel="stylesheet" href="/style.css">
@@ -16,8 +16,8 @@
         <p>Temporary hosting for static websites, usable programmatically.</p>
         <p>
             With this service you can create a hosted website simply by
-            uploading a zip or tar file containing your site (up to 50 MiB) via
-            a HTTP POST. The below curl command will do just that:
+            uploading a HTML, zip or tar file containing your site (up to 50
+            MiB) via a HTTP POST. The below curl command will do just that:
         </p>
         <code>
             curl --data-binary @website.zip https://tmpweb.net
@@ -27,7 +27,7 @@
             hosted for the next seven days.
         </p>
         <p>
-            /tmp/web.net is intended to aid in sharing generated HTML reports and
+            <a href="https://tmpweb.net">tmpweb.net</a> is intended to aid in sharing generated HTML reports and
             design prototypes.
         </p>
         <!-- Re-enable the web uploader when I work out why it wasn't working. -->
@@ -42,13 +42,39 @@
         </form> -->
         <!-- Terms of service should be written here. -->
         <p>
-            If you have any questions please contact <a
-            href="mailto:admin@tmpweb.net">admin@tmpweb.net</a>.
-        </p>
-        <p>
             The source code for this service can be found on <a
             href="https://github.com/Fraetor/tmpweb.net">GitHub</a>.
         </p>
+        <details>
+            <summary>Terms and Conditions</summary>
+            <p>
+                Last updated on the <time datetime="2023-07-01">1<sup>st</sup>
+                of July 2023</time>.
+            </p>
+            <p>
+                By uploading content to this service you are granting us
+                permission to redistribute it until it is deleted. No other
+                rights are granted, and you retain whatever rights you had to
+                the content.
+            </p>
+            <p>
+                Uploaded content is be deleted approximately 7 days after being
+                uploaded, though there can be up to a 24 hour delay. At our
+                digression we may delete content sooner. This may be due to
+                receiving a complaint, storage considerations, or any other
+                reason.
+            </p>
+            <p>
+                The service may temporary collect information such as your IP
+                address to prevent denial of service attacks. This information
+                is not written to permanent storage, and is retained for less
+                than an hour.
+            </p>
+            <p>
+                If you have any questions please contact <a
+                href="mailto:admin@tmpweb.net">admin@tmpweb.net</a>.
+            </p>
+        </details>
     </main>
 </body>
 
