@@ -1,0 +1,33 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+ci:
+  autoupdate_schedule: monthly
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: bf7a16254ec96b084a6caf3d435ec18f0f245cc7  # frozen: 23.3.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: c838a5e98878f17889cfce311e1406d252f87ec5  # frozen: 6.0.0
+    hooks:
+      - id: flake8
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: f71fa2c1f9cf5cb705f73dffe4b21f7c61470ba9  # frozen: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: debug-statements
+      - id: check-toml
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: 355e50e14fd03fe83e4ed9aa0489824b150b3b58  # frozen: v2.2.5
+    hooks:
+    - id: codespell
