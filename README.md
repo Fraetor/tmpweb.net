@@ -49,7 +49,7 @@ nginx -s reload
 
 Once NGINX is configured correctly, simply run `./run-tmpweb.sh`.
 
-To delete expired sites pass a DELETE request from a loopback address.
+To delete all expired sites pass a DELETE request from a loopback address.
 
 I'd recommend adding this to the crontab:
 
@@ -58,7 +58,7 @@ I'd recommend adding this to the crontab:
 @reboot cd /var/www/tmpweb/tmpweb.net ; ./run-tmpweb.sh
 
 # Delete expired websites for tmpweb.net.
-0 0 * * * perl -e 'sleep rand(18000)' ; curl -X DELETE http://127.0.0.1:8000
+0 0 * * * curl -X DELETE http://127.0.0.1:8000
 ```
 
 ## Roadmap/To Do
