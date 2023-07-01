@@ -68,7 +68,7 @@ def _safe_zip_members(members: zipfile.ZipInfo, extract_path: Path):
 
 
 def _delete_remaining_symlinks(extract_path: Path, max_size: int):
-    # Delete any symlinks in the archive for security.
+    # Delete any symlinks in the archive for security. Just in case.
     total_size = 0
     for root, dirs, files in os.walk(extract_path, followlinks=False):
         for directory in dirs:
@@ -89,7 +89,7 @@ def _delete_remaining_symlinks(extract_path: Path, max_size: int):
 
 
 def safe_extract(
-    file_path: Path, extract_path: Path = Path("."), max_size: int = 2**32 - 1
+    file_path: Path, extract_path: Path = Path("."), max_size: int = 2147483647
 ):
     """Unzip/untar in a vaguely safe way."""
     extract_path = Path(extract_path)
