@@ -56,7 +56,7 @@ I'd recommend adding this to the crontab:
 ## Roadmap/To Do
 
 - [ ] Add tests.
-- [ ] Improve front page, including adding terms of use.
+- [x] Improve front page, including adding terms of use.
 - [x] Migrate to shared infrastructure.
 - [x] Add better installation instructions.
 
