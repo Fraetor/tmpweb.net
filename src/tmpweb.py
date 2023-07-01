@@ -10,8 +10,10 @@ import tomllib
 
 from safe_extractor import safe_extract
 
-
-logging.basicConfig(level=os.getenv("LOGLEVEL", "INFO"))
+LOGLEVEL = os.getenv("LOGLEVEL")
+if LOGLEVEL not in logging.getLevelNamesMapping():
+    LOGLEVEL = "INFO"
+logging.basicConfig(level=LOGLEVEL)
 
 # Read config file.
 with open("config.toml", "rb") as fp:
@@ -29,6 +31,32 @@ CREATE TABLE IF NOT EXISTS sites(
 """
 )
 db.commit()
+
+
+def unwrap_multipart(multipart: bytes) -> bytes:
+    """
+    Extracts data from within a multipart/form-data encoding. If there are
+    multiple files, it just extracts the first, and ignores any headers.
+
+    Raises a ValueError if it isn't multipart/form data.
+    """
+
+    # Multipart/form-data format
+    # ==========================
+    # The first line is the separator of the multipart data. It is followed by
+    # some RFC 822 style headers, which we don't care about, then two
+    # consecutive newlines. The content follows, before another newline and the
+    # separator again. All newlines are CRLF.
+
+    separator = multipart[: multipart.index(b"\r\n")]
+    logging.debug("Multipart separator: %s", separator)
+    # Start +4 so the \r\n\r\n is taken into account.
+    content_start = multipart.index(b"\r\n\r\n") + 4
+    # End -2 so \r\n before the separator is taken off.
+    content_end = multipart.index(separator, content_start) - 2
+    logging.debug("Multipart content starts at index %s", content_start)
+    logging.debug("Multipart content ends at index %s", content_end)
+    return multipart[content_start:content_end]
 
 
 def get_web_root(directory: Path) -> Path:
@@ -54,6 +82,10 @@ def create_site(environ):
             "Archive is too big! Max size is %s bytes.", config["max_site_size"]
         )
         return http_response(413)
+
+    if "multipart/form-data" in environ["CONTENT_TYPE"]:
+        logging.debug("Unwrapping multipart/form-data")
+        upload = unwrap_multipart(upload)
 
     # Save upload to temporary location.
     archive_path = Path(tempfile.gettempdir(), secrets.token_hex())
