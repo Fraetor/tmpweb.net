@@ -11,7 +11,7 @@ if len(sys.argv) < 2 or "-h" in sys.argv or "--help" in sys.argv:
     sys.exit(1)
 
 # Read config file.
-with open("config.toml", "rb") as fp:
+with open("../src/config.toml", "rb") as fp:
     config = tomllib.load(fp)
 
 with sqlite3.connect(config["database_location"]) as db:
