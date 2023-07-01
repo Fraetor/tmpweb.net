@@ -1,11 +1,11 @@
-import logging
 from pathlib import Path
+import logging
+import os
 import secrets
 import shutil
 import sqlite3
-import time
 import tempfile
-import os
+import time
 
 try:
     import tomllib
@@ -15,7 +15,7 @@ except ModuleNotFoundError:
 from safe_extractor import safe_extract
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=os.getenv("LOGLEVEL", "INFO"))
 
 # Read config file.
 with open("config.toml", "rb") as fp:
@@ -118,7 +118,7 @@ def delete_old_sites():
     query = "SELECT site_id FROM sites WHERE expiry_date < ?;"
     for row in db.execute(query, (int(time.time()),)):
         site_id = row[0]
-        logging.debug("Deleting site: %s", site_id)
+        logging.info("Deleting site: %s", site_id)
         shutil.rmtree(Path(config["web_root"]).joinpath(f"{site_id}/"))
         db.execute("DELETE FROM sites WHERE site_id = ?;", (site_id,))
         db.commit()
@@ -157,6 +157,7 @@ def http_response(status_code):
 
 
 def app(environ, start_response):
+    """Entry point of WSGI app."""
     logging.debug("Received %s request", environ["REQUEST_METHOD"])
     if environ["REQUEST_METHOD"] == "POST":
         response = create_site(environ)
