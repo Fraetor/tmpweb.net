@@ -31,8 +31,6 @@ import os
 import tarfile
 import zipfile
 
-logging.basicConfig(level=logging.INFO)
-
 
 def _contains_path(path: Path, parent_path: Path):
     try:
