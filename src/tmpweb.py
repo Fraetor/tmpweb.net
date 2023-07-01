@@ -88,13 +88,12 @@ def create_site(environ):
         upload = unwrap_multipart(upload)
 
     # Save upload to temporary location.
-    archive_path = Path(tempfile.gettempdir(), secrets.token_hex())
     if upload[:4] == b"\x50\x4b\x03\x04" or upload[:4] == b"\x50\x4b\x01\x02":
-        archive_path = archive_path.with_suffix(".zip")
+        archive_path = Path(tempfile.gettempdir(), f"{secrets.token_hex()}.zip")
     elif upload[:9] == b"<!DOCTYPE" or upload[:9] == b"<!doctype":
-        archive_path = archive_path.with_suffix(".html")
+        archive_path = Path(tempfile.gettempdir(), "index.html")
     else:
-        archive_path = archive_path.with_suffix(".tar")
+        archive_path = Path(tempfile.gettempdir(), f"{secrets.token_hex()}.tar")
     archive_path.write_bytes(upload)
 
     with tempfile.TemporaryDirectory() as tmpdir:
