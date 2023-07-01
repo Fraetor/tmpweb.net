@@ -23,19 +23,21 @@ with open("config.toml", "rb") as fp:
 
 # Connect to database and setup table.
 db = sqlite3.connect(config["database_location"])
-query = """CREATE TABLE IF NOT EXISTS sites(
+db.execute(
+    """\
+CREATE TABLE IF NOT EXISTS sites(
     site_id TEXT PRIMARY KEY,
     creation_date INT,
     expiry_date INT
 );
 """
-db.execute(query)
+)
 db.commit()
 
 
-def get_web_root(dir: Path) -> Path:
+def get_web_root(directory: Path) -> Path:
     """Descend tree until we find either multiple directories or some files."""
-    for root, dirs, files in os.walk(dir, followlinks=False):
+    for root, dirs, files in os.walk(directory, followlinks=False):
         if len(dirs) >= 2 or len(files) > 0:
             return Path(root)
     raise ValueError("No files in archive.")
@@ -49,7 +51,7 @@ def create_site(environ):
         archive = body.read(config["max_site_size"])
         if len(body.read(1)):
             logging.error(
-                f"Archive is too big! Max size is {config['max_site_size']} bytes."
+                "Archive is too big! Max size is %s bytes.", config["max_site_size"]
             )
             return http_response(413)
         if archive[:4] == b"\x50\x4b\x03\x04" or archive[:4] == b"\x50\x4b\x01\x02":
@@ -61,7 +63,7 @@ def create_site(environ):
             file.write(archive)
     else:
         logging.error(
-            f"Archive is too big! Max size is {config['max_site_size']} bytes."
+            "Archive is too big! Max size is %s bytes.", config["max_site_size"]
         )
         return http_response(413)
     # Might make this configurable in future.
@@ -77,7 +79,7 @@ def create_site(environ):
             try:
                 safe_extract(archive_path, tmpdir, config["max_site_size"])
             except ValueError:
-                logging.error(f"Unknown filetype for {archive_path}")
+                logging.error("Unknown filetype for %s", {archive_path})
                 return http_response(400)
             finally:
                 # Remove original archive.
@@ -98,12 +100,12 @@ def create_site(environ):
         logging.error(err)
         return http_response(500)
     url = f"{config['domain']}/{site_id}/\n".encode()
-    logging.info(f"Created site at {url.decode()}")
+    logging.info("Created site at %s", url.decode())
     response = {
         "status": "200 OK",
         "headers": [
             ("Content-Type", "text/plain"),
-            ("Content-Length", f"{len(url)}"),
+            ("Content-Length", str(len(url))),
         ],
         "data": [url],
     }
@@ -116,7 +118,7 @@ def delete_old_sites():
     query = "SELECT site_id FROM sites WHERE expiry_date < ?;"
     for row in db.execute(query, (int(time.time()),)):
         site_id = row[0]
-        logging.debug(f"Deleting site: {site_id}")
+        logging.debug("Deleting site: %s", site_id)
         shutil.rmtree(Path(config["web_root"]).joinpath(f"{site_id}/"))
         db.execute("DELETE FROM sites WHERE site_id = ?;", (site_id,))
         db.commit()
@@ -155,7 +157,7 @@ def http_response(status_code):
 
 
 def app(environ, start_response):
-    logging.debug(f"Received {environ['REQUEST_METHOD']} request")
+    logging.debug("Received %s request", environ["REQUEST_METHOD"])
     if environ["REQUEST_METHOD"] == "POST":
         response = create_site(environ)
     elif environ["REQUEST_METHOD"] == "DELETE":
@@ -164,7 +166,7 @@ def app(environ, start_response):
         else:
             response = http_response(403)
     else:
-        logging.error(f'Unhandled request method: {environ["REQUEST_METHOD"]}')
+        logging.error("Unhandled request method: %s", environ["REQUEST_METHOD"])
         response = http_response(405)
     start_response(response["status"], response["headers"])
     return response["data"]
