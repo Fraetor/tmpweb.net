@@ -9,4 +9,4 @@ with open("../src/config.toml", "rb") as fp:
 
 print(f"Installing into {config['web_root']}...")
 os.makedirs(config["web_root"], exist_ok=True)
-shutil.copytree("static/", config["web_root"], dirs_exist_ok=True)
+shutil.copytree("../static/", config["web_root"], dirs_exist_ok=True)
