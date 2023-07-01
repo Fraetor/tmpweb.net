@@ -20,15 +20,11 @@ source venv/bin/activate
 ```
 
 - Install the dependencies: `pip install -r requirements.txt`
-
 - Configure NGINX to act as a proxy to the gunicorn server. See
   [nginx.conf](nginx.conf) and [tmpweb.net.conf](tmpweb.net.conf) for example
   configurations.
-
 - Configure `src/config.toml`.
-
 - Copy static files into hosting directory: `python3 install.py`
-
 - Reload NGINX
 
 ```bash
@@ -37,13 +33,9 @@ nginx -s reload
 
 ### Requirements
 
-- Recent [Python 3](https://www.python.org/) (developed with 3.11, but may work with some older versions)
+- Recent [Python 3](https://www.python.org/) (>= 3.11 due to tomllib usage)
 - gunicorn
 - NGINX web server
-
-### Development Requirements
-
-- [PyTest](https://docs.pytest.org/)
 
 ## Usage
 
@@ -58,7 +50,7 @@ I'd recommend adding this to the crontab:
 @reboot cd /var/www/tmpweb/tmpweb.net ; ./run-tmpweb.sh
 
 # Delete expired websites for tmpweb.net.
-0 0 * * * curl -X DELETE http://127.0.0.1:8000
+0 */6 * * * curl -X DELETE http://127.0.0.1:8000
 ```
 
 ## Roadmap/To Do
