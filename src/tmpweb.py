@@ -1,21 +1,17 @@
-import logging
 from pathlib import Path
+import logging
+import os
 import secrets
 import shutil
 import sqlite3
-import time
 import tempfile
-import os
-
-try:
-    import tomllib
-except ModuleNotFoundError:
-    import tomli as tomllib
+import time
+import tomllib
 
 from safe_extractor import safe_extract
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=os.getenv("LOGLEVEL", "INFO"))
 
 # Read config file.
 with open("config.toml", "rb") as fp:
@@ -45,37 +41,34 @@ def get_web_root(directory: Path) -> Path:
 
 def create_site(environ):
     """Create a site from a POSTed archive."""
-    # Save archive to temporary location.
-    if int(environ["CONTENT_LENGTH"]) < config["max_site_size"]:
-        body = environ["wsgi.input"]
-        archive = body.read(config["max_site_size"])
-        if len(body.read(1)):
-            logging.error(
-                "Archive is too big! Max size is %s bytes.", config["max_site_size"]
-            )
-            return http_response(413)
-        if archive[:4] == b"\x50\x4b\x03\x04" or archive[:4] == b"\x50\x4b\x01\x02":
-            suffix = ".zip"
-        else:
-            suffix = ".tar"
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as file:
-            archive_path = Path(file.name)
-            file.write(archive)
-    else:
+
+    # Check incoming upload is below max size.
+    if int(environ["CONTENT_LENGTH"]) > config["max_site_size"]:
         logging.error(
             "Archive is too big! Max size is %s bytes.", config["max_site_size"]
         )
         return http_response(413)
-    # Might make this configurable in future.
-    retention_length = config["default_retention"]
-    # Generated URLs will have a 9 byte long base64 path. As base64 encodes 3 bytes
-    # to 4 characters this gives us a nice length of URL whilst having sufficient
-    # keyspace for randomly finding a site to take many millennia.
-    site_id = secrets.token_urlsafe(9)
-    creation_date = int(time.time())
-    expiry_date = creation_date + retention_length * 24 * 3600
-    try:
-        with tempfile.TemporaryDirectory() as tmpdir:
+    upload = environ["wsgi.input"].read(config["max_site_size"])
+    if len(environ["wsgi.input"].read(1)):
+        logging.error(
+            "Archive is too big! Max size is %s bytes.", config["max_site_size"]
+        )
+        return http_response(413)
+
+    # Save upload to temporary location.
+    archive_path = Path(tempfile.gettempdir(), secrets.token_hex())
+    if upload[:4] == b"\x50\x4b\x03\x04" or upload[:4] == b"\x50\x4b\x01\x02":
+        archive_path = archive_path.with_suffix(".zip")
+    elif upload[:9] == b"<!DOCTYPE" or upload[:9] == b"<!doctype":
+        archive_path = archive_path.with_suffix(".html")
+    else:
+        archive_path = archive_path.with_suffix(".tar")
+    archive_path.write_bytes(upload)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        if archive_path.suffix == ".html":
+            shutil.move(archive_path, tmpdir)
+        else:
             try:
                 safe_extract(archive_path, tmpdir, config["max_site_size"])
             except ValueError:
@@ -84,30 +77,38 @@ def create_site(environ):
             finally:
                 # Remove original archive.
                 archive_path.unlink()
-            try:
-                web_root = get_web_root(tmpdir)
-            except ValueError:
-                logging.error("No servable files found in archive.")
-                return http_response(400)
-            # Record site in database
-            query = "INSERT INTO sites VALUES(?, ?, ?);"
-            db.execute(query, (site_id, creation_date, expiry_date))
-            db.commit()
-            shutil.copytree(
-                web_root, Path(config["web_root"], site_id), dirs_exist_ok=True
-            )
-    except Exception as err:
-        logging.error(err)
-        return http_response(500)
-    url = f"{config['domain']}/{site_id}/\n".encode()
-    logging.info("Created site at %s", url.decode())
+        try:
+            upload_root = get_web_root(tmpdir)
+        except ValueError:
+            logging.error("No servable files found in archive.")
+            return http_response(400)
+
+        # Generated URLs will have a 9 byte long base64 path. As base64 encodes
+        # 3 bytes to 4 characters this gives us a nice length of URL whilst
+        # having sufficient keyspace for randomly finding a site to take many
+        # millennia.
+        site_id = secrets.token_urlsafe(9)
+        # Might make retention length configurable as part of the upload in
+        # future, probably with a HTTP header.
+        creation_date = int(time.time())
+        expiry_date = creation_date + config["default_retention"] * 24 * 3600
+
+        # Record site in database.
+        query = "INSERT INTO sites VALUES(?, ?, ?);"
+        db.execute(query, (site_id, creation_date, expiry_date))
+        db.commit()
+        # Copy files to web server directory.
+        shutil.copytree(upload_root, Path(config["web_root"], site_id))
+
+    url_bytes = f"{config['domain']}/{site_id}/\n".encode()
+    logging.info("Created site at %s", url_bytes.decode())
     response = {
         "status": "200 OK",
         "headers": [
             ("Content-Type", "text/plain"),
-            ("Content-Length", str(len(url))),
+            ("Content-Length", str(len(url_bytes))),
         ],
-        "data": [url],
+        "data": [url_bytes],
     }
     return response
 
@@ -118,10 +119,10 @@ def delete_old_sites():
     query = "SELECT site_id FROM sites WHERE expiry_date < ?;"
     for row in db.execute(query, (int(time.time()),)):
         site_id = row[0]
-        logging.debug("Deleting site: %s", site_id)
+        logging.info("Deleting site: %s", site_id)
         shutil.rmtree(Path(config["web_root"]).joinpath(f"{site_id}/"))
         db.execute("DELETE FROM sites WHERE site_id = ?;", (site_id,))
-        db.commit()
+    db.commit()
     return http_response(200)
 
 
@@ -157,16 +158,22 @@ def http_response(status_code):
 
 
 def app(environ, start_response):
-    logging.debug("Received %s request", environ["REQUEST_METHOD"])
-    if environ["REQUEST_METHOD"] == "POST":
-        response = create_site(environ)
-    elif environ["REQUEST_METHOD"] == "DELETE":
-        if get_client_address(environ) == "127.0.0.1":
-            response = delete_old_sites()
+    """Entry point of WSGI app."""
+    try:
+        logging.debug("Received %s request", environ["REQUEST_METHOD"])
+        if environ["REQUEST_METHOD"] == "POST":
+            response = create_site(environ)
+        elif environ["REQUEST_METHOD"] == "DELETE":
+            if get_client_address(environ) == "127.0.0.1":
+                response = delete_old_sites()
+            else:
+                response = http_response(403)
         else:
-            response = http_response(403)
-    else:
-        logging.error("Unhandled request method: %s", environ["REQUEST_METHOD"])
-        response = http_response(405)
+            logging.error("Unhandled request method: %s", environ["REQUEST_METHOD"])
+            response = http_response(405)
+    except Exception as err:
+        logging.error(err)
+        response = http_response(500)
+
     start_response(response["status"], response["headers"])
     return response["data"]

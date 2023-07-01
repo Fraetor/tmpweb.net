@@ -1,12 +1,8 @@
 #! /usr/bin/env python3
 
-import shutil
 import os
-
-try:
-    import tomllib
-except ModuleNotFoundError:
-    import tomli as tomllib
+import shutil
+import tomllib
 
 with open("src/config.toml", "rb") as fp:
     config = tomllib.load(fp)

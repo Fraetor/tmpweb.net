@@ -1,5 +1,5 @@
 # The location of the service's public webserver.'
-domain = "http://localhost:8000"
+domain = "https://tmpweb.net"
 
 # How many days sites are retained.
 default_retention = 7
@@ -8,7 +8,7 @@ default_retention = 7
 max_site_size = 52428800  # 50 MiB
 
 # The root where files are served from.
-web_root = "/tmp/srv/tmpweb/www/"
+web_root = "/var/www/tmpweb/html/"
 
 # The location of the service's database.
-database_location = "/tmp/srv/tmpweb/tmpweb.db"
+database_location = "/var/www/tmpweb/tmpweb.db"

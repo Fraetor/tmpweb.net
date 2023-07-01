@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>/tmp/web.net</title>
+    <title>tmpweb.net</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="A programmatically usable temporary web host.">
     <link rel="stylesheet" href="/style.css">
@@ -12,26 +12,22 @@
 
 <body>
     <main>
-        <div class="centred">
-            <img class="logo" src="logo.svg" alt="/tmp/web.net">
-        </div>
+        <img class="logo" src="logo.svg" alt="/tmp/web.net">
         <p>Temporary hosting for static websites, usable programmatically.</p>
         <p>
             With this service you can create a hosted website simply by
-            uploading a zip or tar file containing your site (up to 50 MiB) via
-            a HTTP POST. The below curl command will do just that:
+            uploading a HTML, zip or tar file containing your site (up to 50
+            MiB) via a HTTP POST. The below curl command will do just that:
         </p>
-        <div class="centred">
-            <code>
-                curl --data-binary @website.zip https://tmpweb.net
-            </code>
-        </div>
+        <code>
+            curl --data-binary @website.zip https://tmpweb.net
+        </code>
         <p>
             The server will respond with the URL at which your website will be
             hosted for the next seven days.
         </p>
         <p>
-            /tmp/web.net is intended to aid in sharing generated HTML reports and
+            <a href="https://tmpweb.net">tmpweb.net</a> is intended to aid in sharing generated HTML reports and
             design prototypes.
         </p>
         <!-- Re-enable the web uploader when I work out why it wasn't working. -->
@@ -45,10 +41,53 @@
             <button>Upload</button>
         </form> -->
         <!-- Terms of service should be written here. -->
-        <p>If you have any questions please contact <a href="mailto:admin@tmpweb.net">admin@tmpweb.net</a>.</p>
-        <p>The source code for this service can be found on <a href="https://github.com/Fraetor/tmpweb.net">GitHub</a>.
+        <p>
+            The source code for this service can be found on <a href="https://github.com/Fraetor/tmpweb.net">GitHub</a>.
         </p>
+        <details>
+            <summary>Terms and Conditions</summary>
+            <p>
+                Last updated on the <time datetime="2023-07-01">1<sup>st</sup>
+                    of July 2023</time>.
+            </p>
+            <p>
+                By uploading content to this service you are granting us
+                permission to redistribute it until it is deleted. No other
+                rights are granted, and you retain whatever rights you had to
+                the content.
+            </p>
+            <p>
+                Uploaded content is be deleted approximately 7 days after being
+                uploaded, though there can be up to a 24 hour delay. At our
+                digression we may delete content sooner. This may be due to
+                receiving a complaint, storage considerations, or any other
+                reason.
+            </p>
+            <p>
+                The service may temporary collect information such as your IP
+                address to prevent denial of service attacks. This information
+                is not written to permanent storage, and is retained for less
+                than an hour.
+            </p>
+            <p>
+                This service uses <a href="https://www.goatcounter.com/">GoatCounter</a> to collect
+                usage statistics. These are anonymised and stored indefinitely.
+                The collected data is:
+            <ul>
+                <li>URL of the visited page.</li>
+                <li>Referer header.</li>
+                <li>User-Agent header.</li>
+                <li>Screen size.</li>
+                <li>Country based on IP address.</li>
+                <li>A hash of the IP address, User-Agent, and random number.</li>
+            </ul>
+            </p>
+            <p>
+                If you have any questions please contact <a href="mailto:admin@tmpweb.net">admin@tmpweb.net</a>.
+            </p>
+        </details>
     </main>
+    <script data-goatcounter="https://fraetor.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 
 </html>

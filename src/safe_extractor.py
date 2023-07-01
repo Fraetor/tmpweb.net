@@ -25,10 +25,13 @@
 # SOFTWARE.
 ################################################################################
 
-import os
 from pathlib import Path
+import logging
+import os
 import tarfile
 import zipfile
+
+logging.basicConfig(level=logging.INFO)
 
 
 def _contains_path(path: Path, parent_path: Path):
@@ -43,11 +46,11 @@ def _safe_tar_members(members: tarfile.TarInfo, extract_path: Path):
     valid_members = []
     for member in members:
         if member.isdev():
-            print(f"{member.name} is blocked (device file)")
+            logging.info("%s is blocked (device file)", {member.name})
         elif member.issym() or member.islnk():
-            print(f"{member.name} is blocked (symlink or hard link)")
+            logging.info("%s is blocked (symlink or hard link)", member.name)
         elif not _contains_path(member.name, extract_path):
-            print(f"{member.name} is blocked (illegal path)")
+            logging.info("%s is blocked (illegal path)", member.name)
         else:
             valid_members.append(member)
     return valid_members
@@ -58,14 +61,14 @@ def _safe_zip_members(members: zipfile.ZipInfo, extract_path: Path):
     for member in members:
         # ZIP can't contain device files/symlinks... Probably...
         if not _contains_path(member.filename, extract_path):
-            print(f"{member.filename} is blocked (illegal path)")
+            logging.info("%s is blocked (illegal path)", member.filename)
         else:
             valid_members.append(member)
     return valid_members
 
 
 def _delete_remaining_symlinks(extract_path: Path, max_size: int):
-    # Delete any symlinks in the archive for security.
+    # Delete any symlinks in the archive for security. Just in case.
     total_size = 0
     for root, dirs, files in os.walk(extract_path, followlinks=False):
         for directory in dirs:
@@ -86,7 +89,7 @@ def _delete_remaining_symlinks(extract_path: Path, max_size: int):
 
 
 def safe_extract(
-    file_path: Path, extract_path: Path = Path("."), max_size: int = 2**32 - 1
+    file_path: Path, extract_path: Path = Path("."), max_size: int = 2147483647
 ):
     """Unzip/untar in a vaguely safe way."""
     extract_path = Path(extract_path)
@@ -101,8 +104,8 @@ def safe_extract(
                     )
                     archive.extractall(path=extract_path, members=permitted_members)
                 _delete_remaining_symlinks(extract_path, max_size)
-            except zipfile.BadZipFile:
-                raise ValueError("Bad zip file")
+            except zipfile.BadZipFile as err:
+                raise ValueError("Bad zip file") from err
         elif file_path.suffix.lower() == ".tar":
             try:
                 with tarfile.open(file_path) as archive:
@@ -111,8 +114,8 @@ def safe_extract(
                     )
                     archive.extractall(path=extract_path, members=permitted_members)
                 _delete_remaining_symlinks(extract_path, max_size)
-            except tarfile.TarError:
-                raise ValueError("Bad tar file")
+            except tarfile.TarError as err:
+                raise ValueError("Bad tar file") from err
         else:
             raise ValueError(f"Unknown file extension: {file_path.suffix}")
     finally:

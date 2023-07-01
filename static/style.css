@@ -1,15 +1,25 @@
 body {
     background-color: #f0f0f2;
     font-family: sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
 }
 
 main {
     max-width: 600px;
-    margin: 5em auto;
     padding: 2em;
     background-color: white;
     border-radius: 0.5em;
     box-shadow: 2px 3px 4px 2px darkgrey;
+}
+
+@media (min-width: 600px) {
+    main {
+        margin: 4em 0;
+    }
 }
 
 h1 {
@@ -19,8 +29,12 @@ h1 {
 
 code {
     background-color: #bac8ff;
-    padding: 0.5em 1em;
-    border-radius: 0.3em;
+    padding: 1em;
+    border-radius: 0.5em;
+    font-size: larger;
+    display: block;
+    width: fit-content;
+    margin: 0 auto;
 }
 
 .link-button {
@@ -53,8 +67,5 @@ code {
     margin: 2em auto;
     width: 100%;
     max-width: 520px;
-}
-
-.centred {
-    text-align: center;
+    display: block;
 }
