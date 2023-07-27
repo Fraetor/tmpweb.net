@@ -131,9 +131,21 @@ def create_site(environ):
         # Copy files to web server directory.
         shutil.copytree(upload_root, Path(config["web_root"], site_id))
 
-    url_bytes = f"{config['domain']}/{site_id}/\n".encode()
-    logging.info("Created site at %s", url_bytes.decode())
-    response = {
+    url = f"{config['domain']}/{site_id}/\n"
+    url_bytes = url.encode()
+    logging.info("Created site at %s", url)
+    if "redirect=true" in environ.get("QUERY_STRING", ""):
+        body = f'<!DOCTYPE html><html><body>Your site is available at <a href="{url}">{url}</a>.</body></html>'.encode()
+        return {
+            "status": "303 See Other",
+            "headers": [
+                ("Location", url),
+                ("Content-Type", "text/html"),
+                ("Content-Length", str(len(body))),
+            ],
+            "data": [body],
+        }
+    return {
         "status": "200 OK",
         "headers": [
             ("Content-Type", "text/plain"),
@@ -141,7 +153,6 @@ def create_site(environ):
         ],
         "data": [url_bytes],
     }
-    return response
 
 
 def delete_old_sites():
