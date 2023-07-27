@@ -206,21 +206,18 @@ def http_response(status_code):
 
 def app(environ, start_response):
     """Entry point of WSGI app."""
-    try:
-        logging.debug("Received %s request", environ["REQUEST_METHOD"])
-        if environ["REQUEST_METHOD"] == "POST":
-            response = create_site(environ)
-        elif environ["REQUEST_METHOD"] == "DELETE":
-            if get_client_address(environ) == "127.0.0.1":
-                response = delete_old_sites()
-            else:
-                response = http_response(403)
+
+    logging.debug("Received %s request", environ["REQUEST_METHOD"])
+    if environ["REQUEST_METHOD"] == "POST":
+        response = create_site(environ)
+    elif environ["REQUEST_METHOD"] == "DELETE":
+        if get_client_address(environ) == "127.0.0.1":
+            response = delete_old_sites()
         else:
-            logging.error("Unhandled request method: %s", environ["REQUEST_METHOD"])
-            response = http_response(405)
-    except Exception as err:
-        logging.error(err)
-        response = http_response(500)
+            response = http_response(403)
+    else:
+        logging.error("Unhandled request method: %s", environ["REQUEST_METHOD"])
+        response = http_response(405)
 
     start_response(response["status"], response["headers"])
     return response["data"]
