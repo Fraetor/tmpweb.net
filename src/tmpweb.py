@@ -1,4 +1,5 @@
 from pathlib import Path
+import io
 import logging
 import os
 import secrets
@@ -88,26 +89,30 @@ def create_site(environ):
         upload = unwrap_multipart(upload)
 
     # Save upload to temporary location.
-    if upload[:4] == b"\x50\x4b\x03\x04" or upload[:4] == b"\x50\x4b\x01\x02":
-        archive_path = Path(tempfile.gettempdir(), f"{secrets.token_hex()}.zip")
-    elif upload[:9] == b"<!DOCTYPE" or upload[:9] == b"<!doctype":
-        archive_path = Path(tempfile.gettempdir(), "index.html")
-    else:
-        archive_path = Path(tempfile.gettempdir(), f"{secrets.token_hex()}.tar")
-    archive_path.write_bytes(upload)
+    try:
+        if upload[:4] == b"\x50\x4b\x03\x04" or upload[:4] == b"\x50\x4b\x01\x02":
+            archive_type = "zip"
+            archive_data = io.BytesIO(upload)
+        elif upload[:9] == b"<!DOCTYPE" or upload[:9] == b"<!doctype":
+            archive_type = "html"
+        else:
+            archive_type = "tar"
+            archive_data = io.BytesIO(upload)
+    except IndexError:
+        logging.error("Upload too short. (< 9 bytes)")
+        return http_response(400)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        if archive_path.suffix == ".html":
-            shutil.move(archive_path, tmpdir)
+        if archive_type == "html":
+            Path(tmpdir, "index.html").write_bytes(upload)
         else:
             try:
-                safe_extract(archive_path, tmpdir, config["max_site_size"])
+                safe_extract(
+                    archive_data, tmpdir, config["max_site_size"], archive_type
+                )
             except ValueError:
-                logging.error("Unknown filetype for %s", {archive_path})
+                logging.error("Unknown filetype for %s", {archive_type})
                 return http_response(400)
-            finally:
-                # Remove original archive.
-                archive_path.unlink()
         try:
             upload_root = get_web_root(tmpdir)
         except ValueError:

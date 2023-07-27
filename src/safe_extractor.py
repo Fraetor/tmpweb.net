@@ -26,6 +26,7 @@
 ################################################################################
 
 from pathlib import Path
+import io
 import logging
 import os
 import tarfile
@@ -87,34 +88,37 @@ def _delete_remaining_symlinks(extract_path: Path, max_size: int):
 
 
 def safe_extract(
-    file_path: Path, extract_path: Path = Path("."), max_size: int = 2147483647
+    file: Path | io.BytesIO,
+    extract_path: Path = Path("."),
+    max_size: int = 2147483647,
+    archive_type: str = None,
 ):
     """Unzip/untar in a vaguely safe way."""
+
     extract_path = Path(extract_path)
-    old_cwd = Path.cwd()
-    os.chdir(extract_path)
-    try:
-        if file_path.suffix.lower() == ".zip":
-            try:
-                with zipfile.ZipFile(file_path) as archive:
-                    permitted_members = _safe_zip_members(
-                        archive.infolist(), extract_path
-                    )
-                    archive.extractall(path=extract_path, members=permitted_members)
-                _delete_remaining_symlinks(extract_path, max_size)
-            except zipfile.BadZipFile as err:
-                raise ValueError("Bad zip file") from err
-        elif file_path.suffix.lower() == ".tar":
-            try:
-                with tarfile.open(file_path) as archive:
-                    permitted_members = _safe_tar_members(
-                        archive.getmembers(), extract_path
-                    )
-                    archive.extractall(path=extract_path, members=permitted_members)
-                _delete_remaining_symlinks(extract_path, max_size)
-            except tarfile.TarError as err:
-                raise ValueError("Bad tar file") from err
+    if archive_type is None:
+        if isinstance(file, (str, Path)):
+            archive_type = file.suffix.lower().strip(".")
         else:
-            raise ValueError(f"Unknown file extension: {file_path.suffix}")
-    finally:
-        os.chdir(old_cwd)
+            archive_type = "unspecified"
+
+    if archive_type == "zip":
+        try:
+            with zipfile.ZipFile(file) as archive:
+                permitted_members = _safe_zip_members(archive.infolist(), extract_path)
+                archive.extractall(path=extract_path, members=permitted_members)
+            _delete_remaining_symlinks(extract_path, max_size)
+        except zipfile.BadZipFile as err:
+            raise ValueError("Bad zip file") from err
+    elif archive_type() == "tar":
+        try:
+            with tarfile.open(fileobj=file) as archive:
+                permitted_members = _safe_tar_members(
+                    archive.getmembers(), extract_path
+                )
+                archive.extractall(path=extract_path, members=permitted_members)
+            _delete_remaining_symlinks(extract_path, max_size)
+        except tarfile.TarError as err:
+            raise ValueError("Bad tar file") from err
+    else:
+        raise ValueError(f"Unknown file type: {archive_type}")
