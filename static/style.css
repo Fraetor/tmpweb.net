@@ -18,7 +18,7 @@ main {
 
 @media (min-width: 600px) {
     main {
-        margin: 4em 0;
+        margin: 0;
     }
 }
 
