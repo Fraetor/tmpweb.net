@@ -110,7 +110,7 @@ def safe_extract(
             _delete_remaining_symlinks(extract_path, max_size)
         except zipfile.BadZipFile as err:
             raise ValueError("Bad zip file") from err
-    elif archive_type() == "tar":
+    elif archive_type == "tar":
         try:
             with tarfile.open(fileobj=file) as archive:
                 permitted_members = _safe_tar_members(
