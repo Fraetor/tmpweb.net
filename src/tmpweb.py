@@ -131,7 +131,7 @@ def create_site(environ):
         # Copy files to web server directory.
         shutil.copytree(upload_root, Path(config["web_root"], site_id))
 
-    url = f"{config['domain']}/{site_id}/\n"
+    url = f"{config['domain']}/{site_id}/"
     url_bytes = url.encode()
     logging.info("Created site at %s", url)
     if "redirect=true" in environ.get("QUERY_STRING", ""):
