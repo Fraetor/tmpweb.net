@@ -1,4 +1,4 @@
-[<img alt="tmpweb.net" src="static/logo.svg" width="400">](https://tmpweb.net)
+# [tmpweb.net](https://tmpweb.net)
 
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/Fraetor/tmpweb.net/main.svg)](https://results.pre-commit.ci/latest/github/Fraetor/tmpweb.net/main)
 
