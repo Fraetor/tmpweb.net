@@ -102,23 +102,31 @@ def safe_extract(
         else:
             archive_type = "unspecified"
 
-    if archive_type == "zip":
-        try:
-            with zipfile.ZipFile(file) as archive:
-                permitted_members = _safe_zip_members(archive.infolist(), extract_path)
-                archive.extractall(path=extract_path, members=permitted_members)
-            _delete_remaining_symlinks(extract_path, max_size)
-        except zipfile.BadZipFile as err:
-            raise ValueError("Bad zip file") from err
-    elif archive_type == "tar":
-        try:
-            with tarfile.open(fileobj=file) as archive:
-                permitted_members = _safe_tar_members(
-                    archive.getmembers(), extract_path
-                )
-                archive.extractall(path=extract_path, members=permitted_members)
-            _delete_remaining_symlinks(extract_path, max_size)
-        except tarfile.TarError as err:
-            raise ValueError("Bad tar file") from err
-    else:
-        raise ValueError(f"Unknown file type: {archive_type}")
+    old_cwd = Path().cwd()
+    os.chdir(extract_path)
+
+    try:
+        if archive_type == "zip":
+            try:
+                with zipfile.ZipFile(file) as archive:
+                    permitted_members = _safe_zip_members(
+                        archive.infolist(), extract_path
+                    )
+                    archive.extractall(path=extract_path, members=permitted_members)
+                _delete_remaining_symlinks(extract_path, max_size)
+            except zipfile.BadZipFile as err:
+                raise ValueError("Bad zip file") from err
+        elif archive_type == "tar":
+            try:
+                with tarfile.open(fileobj=file) as archive:
+                    permitted_members = _safe_tar_members(
+                        archive.getmembers(), extract_path
+                    )
+                    archive.extractall(path=extract_path, members=permitted_members)
+                _delete_remaining_symlinks(extract_path, max_size)
+            except tarfile.TarError as err:
+                raise ValueError("Bad tar file") from err
+        else:
+            raise ValueError(f"Unknown file type: {archive_type}")
+    finally:
+        os.chdir(old_cwd)

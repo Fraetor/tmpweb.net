@@ -63,7 +63,7 @@ def unwrap_multipart(multipart: bytes) -> bytes:
 def get_web_root(directory: Path) -> Path:
     """Descend tree until we find either multiple directories or some files."""
     for root, dirs, files in os.walk(directory, followlinks=False):
-        if len(dirs) >= 2 or len(files) > 0:
+        if len(dirs) > 1 or len(files) > 0:
             return Path(root)
     raise ValueError("No files in archive.")
 
