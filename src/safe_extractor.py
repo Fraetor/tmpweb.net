@@ -104,7 +104,6 @@ def safe_extract(
 
     old_cwd = Path().cwd()
     os.chdir(extract_path)
-
     try:
         if archive_type == "zip":
             try:
@@ -122,7 +121,9 @@ def safe_extract(
                     permitted_members = _safe_tar_members(
                         archive.getmembers(), extract_path
                     )
-                    archive.extractall(path=extract_path, members=permitted_members)
+                    archive.extractall(
+                        path=extract_path, members=permitted_members, filter="data"
+                    )
                 _delete_remaining_symlinks(extract_path, max_size)
             except tarfile.TarError as err:
                 raise ValueError("Bad tar file") from err
