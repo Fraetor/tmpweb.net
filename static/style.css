@@ -41,7 +41,7 @@ code {
     display: block;
     text-decoration: none;
     color: black;
-    background-color: #91a7ff;
+    background-color: #bac8ff;
     transition: background-color 0.2s;
     width: fit-content;
     margin: 2em auto 0;
@@ -51,7 +51,7 @@ code {
 }
 
 .link-button:hover {
-    background-color: #748ffc;
+    background-color: #91a7ff;
     transition: background-color 0.2s;
 }
 
