@@ -123,7 +123,11 @@ def safe_extract(
                         archive.getmembers(), extract_path
                     )
                     # filter keyword is only supported in Python 3.11.4 and above.
-                    if sys.version_info.major == 3 and sys.version_info.minor >= 11 and sys.version_info.patch >= 4:
+                    if (
+                        sys.version_info.major == 3
+                        and sys.version_info.minor >= 11
+                        and sys.version_info.patch >= 4
+                    ):
                         archive.extractall(
                             path=extract_path, members=permitted_members, filter="data"
                         )
