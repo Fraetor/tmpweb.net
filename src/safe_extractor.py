@@ -126,6 +126,7 @@ def safe_extract(
                     if sys.version_info.major == 3 and sys.version_info.minor >= 11 and sys.version_info.patch >= 4:
                         archive.extractall(
                             path=extract_path, members=permitted_members, filter="data"
+                        )
                     else:
                         archive.extractall(path=extract_path, members=permitted_members)
                 _delete_remaining_symlinks(extract_path, max_size)
