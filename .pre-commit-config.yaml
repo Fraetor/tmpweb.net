@@ -6,12 +6,12 @@ ci:
 
 repos:
   - repo: https://github.com/psf/black
-    rev: bf7a16254ec96b084a6caf3d435ec18f0f245cc7  # frozen: 23.3.0
+    rev: 193ee766ca496871f93621d6b58d57a6564ff81b  # frozen: 23.7.0
     hooks:
       - id: black
 
   - repo: https://github.com/PyCQA/flake8
-    rev: c838a5e98878f17889cfce311e1406d252f87ec5  # frozen: 6.0.0
+    rev: 10f4af6dbcf93456ba7df762278ae61ba3120dc6  # frozen: 6.1.0
     hooks:
       - id: flake8
 
