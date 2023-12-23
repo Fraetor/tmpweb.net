@@ -215,6 +215,11 @@ def app(environ, start_response):
             response = delete_old_sites()
         else:
             response = http_response(403)
+    elif environ["REQUEST_METHOD"] == "GET":
+        if environ["PATH_INFO"] == "/ping":
+            response = http_response(200)
+        else:
+            response = http_response(404)
     else:
         logging.error("Unhandled request method: %s", environ["REQUEST_METHOD"])
         response = http_response(405)
