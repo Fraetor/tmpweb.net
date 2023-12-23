@@ -48,20 +48,18 @@
             The below curl command is a simple way to programmatically upload a
             site.
         <p>
-        <code>
-            curl --data-binary @website.zip https://tmpweb.net
-        </code>
+        <pre><code>curl --data-binary @website.zip https://tmpweb.net</code></pre>
         <p>
             If you prefer to manually host something you can upload it below.
         </p>
-        <p>
+        <div class="uploadform">
             <label for="webuploader">Upload a website archive:</label>
             <form method="post" enctype="multipart/form-data" action="https://tmpweb.net/?redirect=true">
                 <input type="file" id="webuploader" name="website"
                     accept="application/zip, application/x-tar, application/x-gzip, application/gzip, application/tar+gzip, text/html">
                 <button>Upload</button>
             </form>
-        </p>
+        </div>
         <p>
             tmpweb.net is intended to aid in
             sharing generated HTML reports and design prototypes. Its source
