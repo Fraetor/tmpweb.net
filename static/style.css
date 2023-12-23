@@ -12,7 +12,6 @@ main {
     max-width: 600px;
     padding: 2em;
     background-color: white;
-    border-radius: 0.5em;
     box-shadow: 2px 3px 4px 2px darkgrey;
 }
 
@@ -27,14 +26,12 @@ h1 {
     text-align: center;
 }
 
-code {
+pre {
     background-color: #bac8ff;
-    padding: 1em;
-    border-radius: 0.5em;
+    padding: 0.5em;
     font-size: larger;
-    display: block;
-    width: fit-content;
-    margin: 0 auto;
+    text-align: center;
+    box-shadow: 2px 2px 2px darkgrey;
 }
 
 .link-button {
@@ -68,4 +65,13 @@ code {
     width: 100%;
     max-width: 520px;
     display: block;
+}
+
+form {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.3em;
+    background-color: #bac8ff;
+    padding: 0.5em;
+    box-shadow: 2px 2px 2px darkgrey;
 }
