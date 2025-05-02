@@ -31,7 +31,7 @@ pre {
     padding: 0.5em;
     font-size: larger;
     text-align: center;
-    box-shadow: 2px 2px 2px darkgrey;
+    box-shadow: inset 2px 2px 2px darkgrey;
 }
 
 .link-button {
@@ -41,9 +41,9 @@ pre {
     background-color: #bac8ff;
     transition: background-color 0.2s;
     width: fit-content;
-    margin: 2em auto 0;
+    margin: 2em auto 1em;
     padding: 1em;
-    border-radius: 0.5em;
+    border-radius: 4px;
     box-shadow: 2px 3px 4px 2px darkgrey;
 }
 
@@ -73,5 +73,5 @@ form {
     margin-top: 0.3em;
     background-color: #bac8ff;
     padding: 0.5em;
-    box-shadow: 2px 2px 2px darkgrey;
+    box-shadow: inset 2px 2px 2px darkgrey;
 }
