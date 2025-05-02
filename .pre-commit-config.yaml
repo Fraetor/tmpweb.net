@@ -5,15 +5,17 @@ ci:
   autoupdate_schedule: monthly
 
 repos:
-  - repo: https://github.com/psf/black
-    rev: 8a737e727ac5ab2f1d4cf5876720ed276dc8dc4b  # frozen: 25.1.0
+  - repo: https://github.com/codespell-project/codespell
+    rev: 63c8f8312b7559622c0d82815639671ae42132ac  # frozen: v2.4.1
     hooks:
-      - id: black
+    - id: codespell
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 4b5e89b4b108a6c1a000c591d334a99a80d34c7b  # frozen: 7.2.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: f0fe93c067104b76ffb58852abe79673a8429bd1  # frozen: v0.11.8
     hooks:
-      - id: flake8
+      - id: ruff
+        args: [--fix, --show-fixes, --exit-non-zero-on-fix]
+      - id: ruff-format
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
@@ -26,8 +28,3 @@ repos:
       - id: check-added-large-files
       - id: check-case-conflict
       - id: check-merge-conflict
-
-  - repo: https://github.com/codespell-project/codespell
-    rev: 63c8f8312b7559622c0d82815639671ae42132ac  # frozen: v2.4.1
-    hooks:
-    - id: codespell
