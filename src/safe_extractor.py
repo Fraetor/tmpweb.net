@@ -29,7 +29,6 @@ from pathlib import Path
 import io
 import logging
 import os
-import sys
 import tarfile
 import zipfile
 
@@ -123,16 +122,9 @@ def safe_extract(
                         archive.getmembers(), extract_path
                     )
                     # filter keyword is only supported in Python 3.11.4 and above.
-                    if (
-                        sys.version_info.major == 3
-                        and sys.version_info.minor >= 11
-                        and sys.version_info.micro >= 4
-                    ):
-                        archive.extractall(
-                            path=extract_path, members=permitted_members, filter="data"
-                        )
-                    else:
-                        archive.extractall(path=extract_path, members=permitted_members)
+                    archive.extractall(
+                        path=extract_path, members=permitted_members, filter="data"
+                    )
                 _delete_remaining_symlinks(extract_path, max_size)
             except tarfile.TarError as err:
                 raise ValueError("Bad tar file") from err
