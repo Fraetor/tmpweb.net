@@ -33,7 +33,10 @@ nginx -s reload
 
 ### Requirements
 
-- Recent [Python 3](https://www.python.org/) (>= 3.11 due to tomllib usage)
+- Recent [Python 3](https://www.python.org/) (>= 3.11.4 due to using
+  [tomllib](https://docs.python.org/3.11/whatsnew/3.11.html#new-modules) and
+  [newer tarfile
+  features](https://docs.python.org/3.11/whatsnew/3.11.html#tarfile))
 - gunicorn
 - NGINX web server
 
