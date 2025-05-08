@@ -122,9 +122,12 @@ def safe_extract(
                         archive.getmembers(), extract_path
                     )
                     # filter keyword is only supported in Python 3.11.4 and above.
-                    archive.extractall(
-                        path=extract_path, members=permitted_members, filter="data"
-                    )
+                    if hasattr(tarfile, "data_filter"):
+                        archive.extractall(
+                            path=extract_path, members=permitted_members, filter="data"
+                        )
+                    else:
+                        archive.extractall(path=extract_path, members=permitted_members)
                 _delete_remaining_symlinks(extract_path, max_size)
             except tarfile.TarError as err:
                 raise ValueError("Bad tar file") from err
