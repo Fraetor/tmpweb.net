@@ -41,25 +41,25 @@ def _contains_path(path: Path, parent_path: Path):
     return path.is_relative_to(parent_path.resolve())
 
 
-def _safe_tar_members(members: tarfile.TarInfo, extract_path: Path):
+def _safe_tar_members(members: list[tarfile.TarInfo], extract_path: Path):
     valid_members = []
     for member in members:
         if member.isdev():
             logging.info("%s is blocked (device file)", {member.name})
         elif member.issym() or member.islnk():
             logging.info("%s is blocked (symlink or hard link)", member.name)
-        elif not _contains_path(member.name, extract_path):
+        elif not _contains_path(Path(member.name), extract_path):
             logging.info("%s is blocked (illegal path)", member.name)
         else:
             valid_members.append(member)
     return valid_members
 
 
-def _safe_zip_members(members: zipfile.ZipInfo, extract_path: Path):
+def _safe_zip_members(members: list[zipfile.ZipInfo], extract_path: Path):
     valid_members = []
     for member in members:
         # ZIP can't contain device files/symlinks... Probably...
-        if not _contains_path(member.filename, extract_path):
+        if not _contains_path(Path(member.filename), extract_path):
             logging.info("%s is blocked (illegal path)", member.filename)
         else:
             valid_members.append(member)
@@ -91,7 +91,7 @@ def safe_extract(
     file: Path | io.BytesIO,
     extract_path: Path = Path("."),
     max_size: int = 2147483647,
-    archive_type: str = None,
+    archive_type: str | None = None,
 ):
     """Unzip/untar in a vaguely safe way."""
 

@@ -103,8 +103,9 @@ def create_site(environ):
         return http_response(400)
 
     with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
         if archive_type == "html":
-            Path(tmpdir, "index.html").write_bytes(upload)
+            (tmpdir / "index.html").write_bytes(upload)
         else:
             try:
                 safe_extract(
