@@ -1,0 +1,9 @@
+[Unit]
+Description=Regularly delete expired websites for tmpweb.net.
+Documentation=https://github.com/Fraetor/tmpweb.net
+
+[Timer]
+OnCalendar=*:00
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Run tmpweb.net application server on startup.
+Documentation=https://github.com/Fraetor/tmpweb.net
+After=network.target
+Wants=network.target
+
+[Service]
+Type=exec
+User=www-data
+WorkingDirectory=/var/www/tmpweb/tmpweb.net/src
+ExecStart=gunicorn tmpweb:app
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
