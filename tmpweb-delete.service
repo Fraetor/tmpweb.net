@@ -6,4 +6,4 @@ After=tmpweb.service
 [Service]
 Type=oneshot
 User=www-data
-ExecStart=curl -X DELETE http://127.0.0.1:8000
+ExecStart=curl -sS -X DELETE http://127.0.0.1:8000
