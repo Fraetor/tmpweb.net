@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import io
 import logging
@@ -32,6 +33,18 @@ CREATE TABLE IF NOT EXISTS sites(
 """
 )
 db.commit()
+
+
+def is_valid_json(s: bytes) -> bool:
+    """Test a bytestring to see if it is valid JSON."""
+    first_chars = s.lstrip()[:1]
+    if first_chars == b"{" or first_chars == b"[":
+        try:
+            json.loads(s)
+            return True
+        except Exception:
+            pass
+    return False
 
 
 def unwrap_multipart(multipart: bytes) -> bytes:
@@ -95,7 +108,7 @@ def create_site(environ):
             archive_data = io.BytesIO(upload)
         elif upload[:9] == b"<!DOCTYPE" or upload[:9] == b"<!doctype":
             archive_type = "html"
-        elif upload[:1] == b"{" or upload[:1] == b"[":
+        elif is_valid_json(upload):
             archive_type = "json"
         else:
             archive_type = "tar"
