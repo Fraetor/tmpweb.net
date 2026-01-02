@@ -95,7 +95,7 @@ def create_site(environ):
             archive_data = io.BytesIO(upload)
         elif upload[:9] == b"<!DOCTYPE" or upload[:9] == b"<!doctype":
             archive_type = "html"
-        elif upload[0] == "{" or upload[0] == "[":
+        elif upload[:1] == b"{" or upload[:1] == b"[":
             archive_type = "json"
         else:
             archive_type = "tar"
