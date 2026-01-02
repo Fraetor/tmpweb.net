@@ -95,6 +95,8 @@ def create_site(environ):
             archive_data = io.BytesIO(upload)
         elif upload[:9] == b"<!DOCTYPE" or upload[:9] == b"<!doctype":
             archive_type = "html"
+        elif upload[0] == "{" or upload[0] == "[":
+            archive_type = "json"
         else:
             archive_type = "tar"
             archive_data = io.BytesIO(upload)
@@ -106,6 +108,8 @@ def create_site(environ):
         tmpdir = Path(tmpdir)
         if archive_type == "html":
             (tmpdir / "index.html").write_bytes(upload)
+        elif archive_type == "json":
+            (tmpdir / "temp.json").write_bytes(upload)
         else:
             try:
                 safe_extract(
@@ -138,6 +142,8 @@ def create_site(environ):
         shutil.copytree(upload_root, Path(config["web_root"], site_id))
 
     url = f"{config['domain']}/{site_id}/"
+    if archive_type == "json":
+        url += "temp.json"
     url_bytes = url.encode()
     logging.info("Created site at %s", url)
     if "redirect=true" in environ.get("QUERY_STRING", ""):
