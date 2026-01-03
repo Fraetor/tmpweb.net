@@ -175,6 +175,7 @@ def create_site(environ):
         "headers": [
             ("Content-Type", "text/plain"),
             ("Content-Length", str(len(url_bytes))),
+            ("Access-Control-Allow-Origin", "*"),
         ],
         "data": [url_bytes],
     }
