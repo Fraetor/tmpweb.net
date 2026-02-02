@@ -28,10 +28,18 @@ h1 {
 
 pre {
     background-color: #bac8ff;
-    padding: 0.5em;
+    padding: 1em;
     font-size: larger;
     text-align: center;
     box-shadow: inset 2px 2px 2px darkgrey;
+    overflow-x: auto;
+}
+
+.callout {
+    padding: 0.5em;
+    background-color: #edf2ff;
+    border-left: 4px solid #bac8ff;
+    box-shadow: 2px 2px 2px darkgrey;
 }
 
 .link-button {
@@ -68,8 +76,8 @@ pre {
 form {
     display: flex;
     justify-content: space-between;
-    margin-top: 0.3em;
+    margin: 0.3em 0 1em;
     background-color: #bac8ff;
-    padding: 0.5em;
+    padding: 1em;
     box-shadow: inset 2px 2px 2px darkgrey;
 }

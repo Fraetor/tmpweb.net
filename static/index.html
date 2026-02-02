@@ -39,67 +39,60 @@
             </p>
         </header>
         <p>
-            <strong>tmpweb.net</strong> is a temporary hosting service for
-            static websites, which you can use for free, even programmatically!
+            <strong>tmpweb.net</strong> is a temporary hosting service for static websites which can be used programmatically.
+            It is intended to aid in sharing generated HTML reports and design prototypes.
+            Its source code can be found on <a href="https://github.com/Fraetor/tmpweb.net">GitHub</a>.
         </p>
         <p>
-            With this service you can create a hosted website simply by
-            uploading a HTML, zip, or tar file containing your site. The server
-            will respond with the URL where your website will be hosted for the
-            next seven days.
+            With this service you can create a hosted website simply by uploading a HTML, zip, or tar file containing your site.
+            The server will respond with the URL where your website will be hosted for the next seven days.
+        </p>
+        <p class="callout">
+            Due to malicious activity, uploading websites now requires authentication via an API token.
+            To request an API token please email <a href="mailto:admin@tmpweb.net?subject=API%20token%20request%20for%20tmpweb.net">admin@tmpweb.net</a>.
         </p>
         <p>
-            The file should be uploaded via HTTP POST and be less than 50 MiB in
-            size.
+            The file should be uploaded via HTTP POST and be less than 50 MiB in size.
+            The API token should be included as the password in HTTP Basic authentication, with the user-id set to "token".
         </p>
         <p>
-            The below curl command is a simple way to programmatically upload a
-            site.
+            The below curl command is a simple way to programmatically upload a site.
         </p>
-        <pre><code>curl --data-binary @website.zip https://tmpweb.net</code></pre>
+        <pre><code>curl --user token:tmpweb_a1b2c3d4 --data-binary @website.zip https://tmpweb.net</code></pre>
         <p>
             Or if you prefer, you can manually upload a site from this page.
         </p>
-        <div class="uploadform">
+        <div>
             <label for="webuploader">Upload a website archive:</label>
-            <form method="post" enctype="multipart/form-data" action="https://tmpweb.net/?redirect=true">
+            <form method="post" enctype="multipart/form-data" action="https://token@tmpweb.net/?redirect=true">
                 <input type="file" id="webuploader" name="website"
                     accept="application/zip, application/x-tar, application/x-gzip, application/gzip, application/tar+gzip, text/html, application/json">
                 <button>Upload</button>
             </form>
         </div>
-        <p>
-            tmpweb.net is intended to aid in sharing generated HTML reports and
-            design prototypes. Its source code can be found on <a
-            href="https://github.com/Fraetor/tmpweb.net">GitHub</a>.
-        </p>
         <details>
             <summary>Terms and Conditions</summary>
             <p>
-                Last updated on the <time datetime="2024-07-17">17<sup>th</sup>
-                of July 2024</time>.
+                Last updated on the <time datetime="2026-02-02">2<sup>nd</sup> of February 2026</time>.
             </p>
             <p>
-                By uploading content to this service you are granting us
-                permission to redistribute it until it is deleted. No other
-                rights are granted, and you retain whatever rights you had
-                to the content.
+                By uploading content to this service you are granting us permission to redistribute it until it is deleted.
+                No other rights are granted, and you retain whatever rights you had to the content.
             </p>
             <p>
-                Uploaded content is deleted approximately 7 days after being
-                uploaded, though there may be up to a 24 hour delay. At our
-                discretion we may delete content sooner. This may be due to
-                receiving a complaint, storage considerations, or any other
-                reason.
+                Uploaded content is deleted approximately 7 days after being uploaded, though there may be up to a 24 hour delay.
+                At our discretion we may delete content sooner. This may be due to receiving a complaint, storage considerations, or any other reason.
             </p>
             <p>
-                The service temporary collects technical information such as
-                your IP address to ensure the reliability of the service.
-                This information is not written to permanent storage.
+                The service temporary collects technical information such as your IP address to ensure the reliability of the service.
+                This information is retained for less than 30 days.
             </p>
             <p>
-                If you have any questions please contact <a
-                href="mailto:admin@tmpweb.net">admin@tmpweb.net</a>.
+                When you request an API token your email address is recorded alongside the generated token so we can effectively control malicious uploads.
+                We will never share your email address.
+            </p>
+            <p>
+                If you have any questions please contact <a href="mailto:admin@tmpweb.net">admin@tmpweb.net</a>.
             </p>
         </details>
     </main>
