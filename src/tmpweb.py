@@ -214,7 +214,12 @@ def get_client_address(environ):
 def is_authorised(environ) -> bool:
     """Check that the provided Authorization header is valid."""
     try:
-        decoded_auth_header = base64.b64decode(environ["HTTP_AUTHORIZATION"])
+        auth_header = environ["HTTP_AUTHORIZATION"]
+        # Scheme name is case insensitive.
+        if auth_header[:6].lower() != "basic ":
+            logging.error("Authorization scheme must be 'Basic'.")
+            return False
+        decoded_auth_header = base64.b64decode(auth_header[6:])
         user, token = decoded_auth_header.split(b":", maxsplit=1)
     except (KeyError, binascii.Error, ValueError):
         # KeyError from missing Authorization header.
