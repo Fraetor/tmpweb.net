@@ -225,6 +225,7 @@ def is_authorised(environ) -> bool:
     if user != b"token":
         logging.error("Authorization username must be 'token'.")
         return False
+    # To avoid timing attacks compare in python rather than in the database.
     for row in db.execute("SELECT token FROM api_tokens;"):
         stored_token = row[0].encode()
         if secrets.compare_digest(token, stored_token):
