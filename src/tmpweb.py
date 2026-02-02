@@ -23,21 +23,21 @@ logging.basicConfig(level=LOGLEVEL)
 with open("config.toml", "rb") as fp:
     config = tomllib.load(fp)
 
-# Connect to database and setup table.
+# Connect to database and setup tables.
 db = sqlite3.connect(config["database_location"])
-db.execute(
-    """\
+db.execute("""\
 CREATE TABLE IF NOT EXISTS sites(
     site_id TEXT PRIMARY KEY,
     creation_date INT,
     expiry_date INT
 );
+""")
+db.execute("""\
 CREATE TABLE IF NOT EXISTS api_tokens(
     token TEXT PRIMARY KEY,
     email TEXT
 );
-"""
-)
+""")
 db.commit()
 
 
