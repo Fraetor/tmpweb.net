@@ -1,3 +1,5 @@
+import base64
+import binascii
 import json
 from pathlib import Path
 import io
@@ -29,6 +31,10 @@ CREATE TABLE IF NOT EXISTS sites(
     site_id TEXT PRIMARY KEY,
     creation_date INT,
     expiry_date INT
+);
+CREATE TABLE IF NOT EXISTS api_tokens(
+    token TEXT PRIMARY KEY,
+    email TEXT
 );
 """
 )
@@ -205,11 +211,43 @@ def get_client_address(environ):
             return environ["REMOTE_ADDR"]
 
 
+def is_authorised(environ) -> bool:
+    """Check that the provided Authorization header is valid."""
+    try:
+        decoded_auth_header = base64.b64decode(environ["HTTP_AUTHORIZATION"])
+        user, token = decoded_auth_header.split(b":", maxsplit=1)
+    except (KeyError, binascii.Error, ValueError):
+        # KeyError from missing Authorization header.
+        # binascii.Error from invalid base64.
+        # ValueError from splitting not producing two values (no :).
+        logging.error("No valid Authorization header.")
+        return False
+    if user != b"token":
+        logging.error("Authorization username must be 'token'.")
+        return False
+    for row in db.execute("SELECT token FROM api_tokens;"):
+        stored_token = row[0].encode()
+        if secrets.compare_digest(token, stored_token):
+            return True
+    logging.error("Token not recognised.")
+    return False
+
+
 def http_response(status_code):
     """Returns a HTTP response with an empty body."""
+    if status_code == 401:
+        return {
+            "status": "401 Unauthorized",
+            "headers": [
+                ("Content-Length", "0"),
+                ("WWW-Authenticate", 'Basic realm="Upload website"'),
+            ],
+            "data": [],
+        }
     status = {
         200: "200 OK",
         400: "400 Bad Request",
+        401: "401 Unauthorized",
         403: "403 Forbidden",
         404: "404 Not Found",
         405: "405 Method Not Allowed",
@@ -230,7 +268,9 @@ def app(environ, start_response):
 
     logging.debug("Received %s request", environ["REQUEST_METHOD"])
     if environ["REQUEST_METHOD"] == "POST":
-        response = create_site(environ)
+        response = (
+            create_site(environ) if is_authorised(environ) else http_response(401)
+        )
     elif environ["REQUEST_METHOD"] == "DELETE":
         if get_client_address(environ) == "127.0.0.1":
             response = delete_old_sites()
