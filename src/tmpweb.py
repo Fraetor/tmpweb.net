@@ -135,7 +135,7 @@ def create_site(environ):
                     archive_data, tmpdir, config["max_site_size"], archive_type
                 )
             except ValueError:
-                logging.error("Unknown filetype for %s", {archive_type})
+                logging.error("Unknown filetype for %s", archive_type)
                 return http_response(400)
         try:
             upload_root = get_web_root(tmpdir)
