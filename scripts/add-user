@@ -1,0 +1,25 @@
+#! /usr/bin/env python3
+
+"""Generate and record a new API token."""
+
+import secrets
+import sqlite3
+import tomllib
+
+# Read config file.
+with open("../src/config.toml", "rb") as fp:
+    config = tomllib.load(fp)
+
+# Get user email.
+email = input("Contact email address: ")
+
+# Securely generate token.
+token = f"tmpweb_{secrets.token_hex()}"
+
+# Store details in database.
+query = "INSERT INTO api_tokens VALUES(?, ?);"
+with sqlite3.connect(config["database_location"]) as db:
+    db.execute(query, (token, email))
+    db.commit()
+
+print(token)
