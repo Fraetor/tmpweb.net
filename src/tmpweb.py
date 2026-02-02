@@ -223,7 +223,7 @@ def is_authorised(environ) -> bool:
         logging.error("No valid Authorization header.")
         return False
     if user != b"token":
-        logging.error("Authorization username must be 'token'.")
+        logging.error("Authorization user-id must be 'token'.")
         return False
     # To avoid timing attacks compare in python rather than in the database.
     for row in db.execute("SELECT token FROM api_tokens;"):
