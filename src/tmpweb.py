@@ -91,7 +91,10 @@ def create_site(environ):
     """Create a site from a POSTed archive."""
 
     # Check incoming upload is below max size.
-    if int(environ["CONTENT_LENGTH"]) > config["max_site_size"]:
+    if (
+        environ.get("CONTENT_LENGTH")
+        and int(environ["CONTENT_LENGTH"]) > config["max_site_size"]
+    ):
         logging.error(
             "Archive is too big! Max size is %s bytes.", config["max_site_size"]
         )
@@ -103,7 +106,7 @@ def create_site(environ):
         )
         return http_response(413)
 
-    if "multipart/form-data" in environ["CONTENT_TYPE"]:
+    if "multipart/form-data" in environ.get("CONTENT_TYPE", ""):
         logging.debug("Unwrapping multipart/form-data")
         upload = unwrap_multipart(upload)
 
