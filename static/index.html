@@ -63,7 +63,8 @@
         <p>
             The below curl command is a simple way to programmatically upload a site.
         </p>
-        <pre><code>curl --user token:tmpweb_a1b2c3d4 --data-binary @website.zip https://tmpweb.net</code></pre>
+        <pre><code>TMPWEB_TOKEN="tmpweb_a1b2c3d4..."<br>curl --user "token:${TMPWEB_TOKEN}" --data-binary @website.zip https://tmpweb.net</code></pre>
+        <!-- !!! Form disabled as it isn't that useful with required authentication. !!!
         <p>
             Or if you prefer, you can manually upload a site from this page.
         </p>
@@ -75,6 +76,7 @@
                 <button>Upload</button>
             </form>
         </div>
+        -->
         <details>
             <summary>Terms and Conditions</summary>
             <p>

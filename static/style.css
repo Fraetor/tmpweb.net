@@ -27,10 +27,9 @@ h1 {
 }
 
 pre {
-    background-color: #bac8ff;
+    background-color: #dbe4ff;
     padding: 1em;
     font-size: larger;
-    text-align: center;
     box-shadow: inset 2px 2px 2px darkgrey;
     overflow-x: auto;
 }
