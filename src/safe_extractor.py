@@ -32,6 +32,8 @@ import tarfile
 import zipfile
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 
 def _contains_path(path: Path, parent_path: Path):
     try:
@@ -45,11 +47,11 @@ def _safe_tar_members(members: list[tarfile.TarInfo], extract_path: Path):
     valid_members = []
     for member in members:
         if member.isdev():
-            logging.info("%s is blocked (device file)", {member.name})
+            logger.info("%s is blocked (device file)", {member.name})
         elif member.issym() or member.islnk():
-            logging.info("%s is blocked (symlink or hard link)", member.name)
+            logger.info("%s is blocked (symlink or hard link)", member.name)
         elif not _contains_path(Path(member.name), extract_path):
-            logging.info("%s is blocked (illegal path)", member.name)
+            logger.info("%s is blocked (illegal path)", member.name)
         else:
             valid_members.append(member)
     return valid_members
@@ -60,7 +62,7 @@ def _safe_zip_members(members: list[zipfile.ZipInfo], extract_path: Path):
     for member in members:
         # ZIP can't contain device files/symlinks... Probably...
         if not _contains_path(Path(member.filename), extract_path):
-            logging.info("%s is blocked (illegal path)", member.filename)
+            logger.info("%s is blocked (illegal path)", member.filename)
         else:
             valid_members.append(member)
     return valid_members

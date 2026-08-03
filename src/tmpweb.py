@@ -15,6 +15,8 @@ import tomllib
 
 from safe_extractor import safe_extract
 
+logger = logging.getLogger(__name__)
+
 LOGLEVEL = os.getenv("LOGLEVEL")
 if LOGLEVEL not in logging.getLevelNamesMapping():
     LOGLEVEL = "INFO"
@@ -70,13 +72,13 @@ def unwrap_multipart(multipart: bytes) -> bytes:
     # separator again. All newlines are CRLF.
 
     separator = multipart[: multipart.index(b"\r\n")]
-    logging.debug("Multipart separator: %s", separator)
+    logger.debug("Multipart separator: %s", separator)
     # Start +4 so the \r\n\r\n is taken into account.
     content_start = multipart.index(b"\r\n\r\n") + 4
     # End -2 so \r\n before the separator is taken off.
     content_end = multipart.index(separator, content_start) - 2
-    logging.debug("Multipart content starts at index %s", content_start)
-    logging.debug("Multipart content ends at index %s", content_end)
+    logger.debug("Multipart content starts at index %s", content_start)
+    logger.debug("Multipart content ends at index %s", content_end)
     return multipart[content_start:content_end]
 
 
@@ -96,19 +98,19 @@ def create_site(environ):
         environ.get("CONTENT_LENGTH")
         and int(environ["CONTENT_LENGTH"]) > config["max_site_size"]
     ):
-        logging.error(
+        logger.error(
             "Archive is too big! Max size is %s bytes.", config["max_site_size"]
         )
         return http_response(413)
     upload = environ["wsgi.input"].read(config["max_site_size"])
     if len(environ["wsgi.input"].read(1)):
-        logging.error(
+        logger.error(
             "Archive is too big! Max size is %s bytes.", config["max_site_size"]
         )
         return http_response(413)
 
     if "multipart/form-data" in environ.get("CONTENT_TYPE", ""):
-        logging.debug("Unwrapping multipart/form-data")
+        logger.debug("Unwrapping multipart/form-data")
         upload = unwrap_multipart(upload)
 
     # Save upload to temporary location.
@@ -124,7 +126,7 @@ def create_site(environ):
             archive_type = "tar"
             archive_data = io.BytesIO(upload)
     except IndexError:
-        logging.error("Upload too short. (< 9 bytes)")
+        logger.error("Upload too short. (< 9 bytes)")
         return http_response(400)
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -139,12 +141,12 @@ def create_site(environ):
                     archive_data, tmpdir, config["max_site_size"], archive_type
                 )
             except ValueError:
-                logging.error("Unknown filetype for %s", archive_type)
+                logger.error("Unknown filetype for %s", archive_type)
                 return http_response(400)
         try:
             upload_root = get_web_root(tmpdir)
         except ValueError:
-            logging.error("No servable files found in archive.")
+            logger.error("No servable files found in archive.")
             return http_response(400)
 
         # Generated URLs will have a 9 byte long base64 path. As base64 encodes
@@ -168,7 +170,7 @@ def create_site(environ):
     if archive_type == "json":
         url += "temp.json"
     url_bytes = url.encode()
-    logging.info("Created site at %s", url)
+    logger.info("Created site at %s", url)
     if "redirect=true" in environ.get("QUERY_STRING", ""):
         body = f'<!DOCTYPE html><html><body>Your site is available at <a href="{url}">{url}</a>.</body></html>'.encode()
         return {
@@ -193,11 +195,11 @@ def create_site(environ):
 
 def delete_old_sites():
     """Deletes expired sites."""
-    logging.info("Deleting expired sites.")
+    logger.info("Deleting expired sites.")
     query = "SELECT site_id FROM sites WHERE expiry_date < ?;"
     for row in db.execute(query, (int(time.time()),)):
         site_id = row[0]
-        logging.info("Deleting site: %s", site_id)
+        logger.info("Deleting site: %s", site_id)
         shutil.rmtree(Path(config["web_root"]).joinpath(f"{site_id}/"))
         db.execute("DELETE FROM sites WHERE site_id = ?;", (site_id,))
     db.commit()
@@ -221,7 +223,7 @@ def is_authorised(environ) -> bool:
         auth_header = environ["HTTP_AUTHORIZATION"]
         # Scheme name is case insensitive.
         if auth_header[:6].lower() != "basic ":
-            logging.error("Authorization scheme must be 'Basic'.")
+            logger.error("Authorization scheme must be 'Basic'.")
             return False
         decoded_auth_header = base64.b64decode(auth_header[6:])
         user, token = decoded_auth_header.split(b":", maxsplit=1)
@@ -229,18 +231,18 @@ def is_authorised(environ) -> bool:
         # KeyError from missing Authorization header.
         # binascii.Error from invalid base64.
         # ValueError from splitting not producing two values (no :).
-        logging.error("No valid Authorization header.")
+        logger.error("No valid Authorization header.")
         return False
     if user != b"token":
-        logging.error("Authorization user-id must be 'token'.")
+        logger.error("Authorization user-id must be 'token'.")
         return False
     # To avoid timing attacks compare in python rather than in the database.
     for row in db.execute("SELECT token, email FROM api_tokens;"):
         stored_token = row[0].encode()
         if secrets.compare_digest(token, stored_token):
-            logging.info(f"Authorized {row[1]}")
+            logger.info(f"Authorized {row[1]}")
             return True
-    logging.error("Token not recognised.")
+    logger.error("Token not recognised.")
     return False
 
 
@@ -277,7 +279,7 @@ def http_response(status_code):
 def app(environ, start_response):
     """Entry point of WSGI app."""
 
-    logging.debug("Received %s request", environ["REQUEST_METHOD"])
+    logger.debug("Received %s request", environ["REQUEST_METHOD"])
     if environ["REQUEST_METHOD"] == "POST":
         response = (
             create_site(environ) if is_authorised(environ) else http_response(401)
@@ -293,7 +295,7 @@ def app(environ, start_response):
         else:
             response = http_response(404)
     else:
-        logging.error("Unhandled request method: %s", environ["REQUEST_METHOD"])
+        logger.error("Unhandled request method: %s", environ["REQUEST_METHOD"])
         response = http_response(405)
 
     start_response(response["status"], response["headers"])
