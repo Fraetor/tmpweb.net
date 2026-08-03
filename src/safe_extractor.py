@@ -25,12 +25,12 @@
 # SOFTWARE.
 ################################################################################
 
-from pathlib import Path
 import io
 import logging
 import os
 import tarfile
 import zipfile
+from pathlib import Path
 
 
 def _contains_path(path: Path, parent_path: Path):

@@ -4,6 +4,7 @@
 
 import secrets
 import sqlite3
+
 import tomllib
 
 # Read config file.
