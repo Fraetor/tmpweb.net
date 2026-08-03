@@ -51,7 +51,7 @@ def is_valid_json(s: bytes) -> bool:
         try:
             json.loads(s)
             return True
-        except Exception:
+        except json.JSONDecodeError:
             pass
     return False
 
