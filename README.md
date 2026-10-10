@@ -56,9 +56,22 @@ I'd recommend adding this to the crontab:
 0 */6 * * * curl -X DELETE http://127.0.0.1:8000
 ```
 
+## Testing
+
+Run the test suite from the repository root with Python's standard-library test
+runner:
+
+```bash
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+The test suite runs without NGINX, Gunicorn, or access to the production
+database. It uses temporary configuration, database, and extraction directories
+so test runs remain isolated from the deployed service.
+
 ## Roadmap/To Do
 
-- [ ] Add tests.
+- [x] Add tests.
 - [x] Improve front page, including adding terms of use.
 - [x] Migrate to shared infrastructure.
 - [x] Add better installation instructions.

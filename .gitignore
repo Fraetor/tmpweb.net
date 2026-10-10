@@ -51,6 +51,10 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# Test archives are generated locally by tests when needed.
+tests/*.tar.gz
+tests/*.zip
+
 # Translations
 *.mo
 *.pot
