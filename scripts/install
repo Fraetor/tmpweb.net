@@ -2,7 +2,6 @@
 
 import os
 import shutil
-
 import tomllib
 
 with open("../src/config.toml", "rb") as fp:

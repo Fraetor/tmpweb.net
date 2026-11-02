@@ -3,9 +3,8 @@
 import shutil
 import sqlite3
 import sys
-from pathlib import Path
-
 import tomllib
+from pathlib import Path
 
 if len(sys.argv) < 2 or "-h" in sys.argv or "--help" in sys.argv:
     print(f"Usage: {sys.argv[0]} site_id [site_id]...\nDeletes sites matching site_id.")
