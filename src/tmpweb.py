@@ -9,9 +9,8 @@ import shutil
 import sqlite3
 import tempfile
 import time
-from pathlib import Path
-
 import tomllib
+from pathlib import Path
 
 from safe_extractor import safe_extract
 
